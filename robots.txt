@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://yuchenchen-debug.github.io/color-iq-test/sitemap.xml

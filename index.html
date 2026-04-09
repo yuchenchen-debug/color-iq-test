@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>色覺測試 Color IQ Test - 你的眼睛能分辨多細微的色差？</title>
+<meta name="description" content="挑戰你的色覺極限！從2,847,000+測試者中脫穎而出，看看你能通過第幾關。只有0.01%的人能達到SSS級。">
+<meta name="keywords" content="色覺測試,Color IQ,色彩辨識,眼力測試,色盲測試">
+<meta property="og:title" content="色覺測試 - 我達到了 Level ??? 🎯">
+<meta property="og:description" content="挑戰你的色覺極限！累計超過284萬人測試，只有2.1%通過Level 25。你能到第幾關？">
+<meta property="og:image" content="https://yuchenchen-debug.github.io/color-iq-test/og-image.png">
+<meta property="og:url" content="https://yuchenchen-debug.github.io/color-iq-test/">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="zh_TW">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="色覺測試 Color IQ Test">
+<meta name="twitter:description" content="挑戰你的色覺極限！你能分辨多細微的色差？">
+<meta name="twitter:image" content="https://yuchenchen-debug.github.io/color-iq-test/og-image.png">
+<meta name="theme-color" content="#0a0a0f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.json">
+<link rel="canonical" href="https://yuchenchen-debug.github.io/color-iq-test/">
+<!-- Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-XW1MRWJR2G"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','G-XW1MRWJR2G');</script>
+<!-- Google AdSense -->
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4737693030554043" crossorigin="anonymous"></script>
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{--bg:#0a0a0f;--primary:#00ff88;--secondary:#ff2d55;--surface:#14141f;--surface2:#1a1a2e;--text:#e0e0e0;--text-dim:#666;--radius:12px}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+.screen{display:none;flex-direction:column;align-items:center;min-height:100vh;padding:20px;width:100%}
+.screen.active{display:flex}
+
+/* Start Screen */
+#start-screen{justify-content:center;gap:24px;text-align:center}
+.logo{font-size:48px;margin-bottom:8px}
+h1{font-size:28px;font-weight:800;background:linear-gradient(135deg,var(--primary),#00cc6a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.subtitle{color:var(--text-dim);font-size:14px;margin-top:4px}
+.stats-bar{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin:8px 0}
+.stat-item{background:var(--surface);padding:10px 16px;border-radius:var(--radius);font-size:12px;color:var(--text-dim)}
+.stat-item span{color:var(--primary);font-weight:700;font-size:14px;display:block;margin-top:2px}
+.btn{background:linear-gradient(135deg,var(--primary),#00cc6a);color:#0a0a0f;border:none;padding:16px 48px;border-radius:50px;font-size:18px;font-weight:800;cursor:pointer;transition:all .2s;letter-spacing:1px;touch-action:manipulation}
+.btn:active{transform:scale(.95);filter:brightness(.9)}
+.btn-secondary{background:var(--surface2);color:var(--text);border:1px solid #333;padding:12px 24px;font-size:14px}
+.personal-best{color:var(--text-dim);font-size:13px;margin-top:4px}
+.personal-best span{color:var(--primary);font-weight:700}
+.how-to{background:var(--surface);border-radius:var(--radius);padding:16px;margin-top:8px;max-width:320px;text-align:left;font-size:13px;color:var(--text-dim);line-height:1.6}
+.how-to b{color:var(--text)}
+
+/* Game Screen */
+#game-screen{justify-content:flex-start;padding-top:16px;gap:12px}
+.game-hud{display:flex;justify-content:space-between;width:100%;max-width:500px;padding:0 4px}
+.hud-item{text-align:center;font-size:12px;color:var(--text-dim)}
+.hud-item .val{font-size:22px;font-weight:800;color:var(--text);display:block}
+.hud-item .val.primary{color:var(--primary)}
+.hud-item .val.danger{color:var(--secondary)}
+.lives{display:flex;gap:4px;font-size:20px}
+.timer-bar{width:100%;max-width:500px;height:4px;background:var(--surface2);border-radius:2px;overflow:hidden}
+.timer-fill{height:100%;background:var(--primary);transition:width .1s linear;border-radius:2px}
+.timer-fill.warning{background:#ffaa00}
+.timer-fill.danger{background:var(--secondary)}
+.grid-container{display:flex;justify-content:center;align-items:center;flex:1;width:100%;max-width:500px}
+.grid{display:grid;gap:6px;width:100%;max-width:400px;aspect-ratio:1;margin:0 auto}
+.tile{border-radius:var(--radius);cursor:pointer;transition:transform .1s,opacity .15s;touch-action:manipulation;position:relative}
+.tile:active{transform:scale(.92)}
+.tile.correct{animation:correct-pop .4s ease}
+.tile.wrong{animation:wrong-shake .4s ease}
+@keyframes correct-pop{0%{transform:scale(1)}30%{transform:scale(1.15)}100%{transform:scale(1)}}
+@keyframes wrong-shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+.level-flash{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);font-size:64px;font-weight:900;color:var(--primary);opacity:0;pointer-events:none;z-index:100;text-shadow:0 0 40px rgba(0,255,136,.4)}
+.level-flash.show{animation:flash-in .6s ease forwards}
+@keyframes flash-in{0%{opacity:0;transform:translate(-50%,-50%) scale(.5)}40%{opacity:1;transform:translate(-50%,-50%) scale(1.1)}100%{opacity:0;transform:translate(-50%,-50%) scale(1.3)}}
+.taunt{font-size:13px;color:var(--text-dim);min-height:20px;text-align:center;font-style:italic}
+.next-level-hint{font-size:12px;color:var(--primary);opacity:.7;text-align:center}
+
+/* Result Screen */
+#result-screen{justify-content:flex-start;padding-top:24px;gap:16px;overflow-y:auto;padding-bottom:40px}
+.result-rank{font-size:72px;font-weight:900;text-align:center;line-height:1}
+.result-rank.sss{background:linear-gradient(135deg,#ff00ff,#00ffff,#ff00ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:rainbow 2s linear infinite;background-size:200% 200%}
+@keyframes rainbow{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+.result-rank.ss{color:#ff00ff}
+.result-rank.s-rank{color:#ffaa00}
+.result-rank.a-rank{color:var(--primary)}
+.result-rank.b-rank{color:#4488ff}
+.result-rank.c-rank{color:var(--text)}
+.result-rank.low-rank{color:var(--text-dim)}
+.result-level{font-size:16px;color:var(--text-dim);text-align:center}
+.result-level span{font-size:40px;font-weight:800;color:var(--primary);display:block}
+.result-msg{font-size:18px;text-align:center;color:var(--text);font-weight:600;padding:0 20px;line-height:1.5}
+.result-percentile{font-size:13px;color:var(--text-dim);text-align:center}
+.result-percentile span{color:var(--secondary);font-weight:700}
+.weakness-box{background:var(--surface);border-radius:var(--radius);padding:16px;width:100%;max-width:400px;font-size:13px;line-height:1.7}
+.weakness-box h3{color:var(--primary);font-size:14px;margin-bottom:8px}
+.weakness-box .item{color:var(--text-dim);display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #1a1a2e}
+.weakness-box .item:last-child{border:none}
+.weakness-box .item span{color:var(--text)}
+.pb-notice{color:var(--primary);font-size:14px;font-weight:700;text-align:center}
+.next-goal{color:var(--text-dim);font-size:13px;text-align:center}
+.next-goal span{color:var(--primary)}
+.share-section{width:100%;max-width:400px}
+.share-section h3{font-size:14px;color:var(--text-dim);margin-bottom:10px;text-align:center}
+.share-btns{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.share-btn{padding:10px 16px;border-radius:50px;border:none;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;touch-action:manipulation;display:flex;align-items:center;gap:6px}
+.share-btn:active{transform:scale(.95)}
+.share-btn.line{background:#06c755;color:#fff}
+.share-btn.twitter{background:#1da1f2;color:#fff}
+.share-btn.copy{background:var(--surface2);color:var(--text);border:1px solid #333}
+.share-btn.ig{background:linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);color:#fff}
+.nickname-section{width:100%;max-width:400px;text-align:center}
+.nickname-section input{background:var(--surface);border:1px solid #333;border-radius:var(--radius);padding:12px 16px;color:var(--text);font-size:14px;width:60%;margin-right:8px;outline:none}
+.nickname-section input:focus{border-color:var(--primary)}
+.nickname-section button{padding:12px 20px}
+.leaderboard-btn{background:none;border:1px solid var(--primary);color:var(--primary);padding:10px 24px;border-radius:50px;font-size:14px;cursor:pointer;transition:all .2s}
+.leaderboard-btn:active{transform:scale(.95)}
+.action-btns{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.fake-stats{background:var(--surface);border-radius:var(--radius);padding:12px 16px;width:100%;max-width:400px;font-size:11px;color:var(--text-dim);text-align:center;line-height:1.8}
+.fake-stats span{color:var(--text);font-weight:600}
+
+/* Leaderboard Modal */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:200;justify-content:center;align-items:center;padding:20px}
+.modal-overlay.active{display:flex}
+.modal{background:var(--surface);border-radius:16px;padding:24px;width:100%;max-width:420px;max-height:80vh;overflow-y:auto}
+.modal h2{text-align:center;font-size:20px;margin-bottom:16px;color:var(--primary)}
+.modal .close-btn{float:right;background:none;border:none;color:var(--text-dim);font-size:24px;cursor:pointer;line-height:1}
+.lb-entry{display:flex;align-items:center;padding:10px 0;border-bottom:1px solid #1a1a2e;font-size:14px}
+.lb-entry:last-child{border:none}
+.lb-rank{width:32px;font-weight:800;color:var(--text-dim)}
+.lb-rank.gold{color:#ffd700}
+.lb-rank.silver{color:#c0c0c0}
+.lb-rank.bronze{color:#cd7f32}
+.lb-name{flex:1;color:var(--text)}
+.lb-score{font-weight:700;color:var(--primary)}
+.lb-grade{margin-left:8px;font-size:12px;font-weight:700;padding:2px 8px;border-radius:20px;background:var(--surface2)}
+
+/* Ads */
+.ad-slot{width:100%;max-width:400px;min-height:50px;text-align:center;margin:8px 0}
+
+/* Canvas hidden */
+#share-canvas{display:none}
+
+/* Misc */
+.copied-toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--primary);color:#0a0a0f;padding:10px 24px;border-radius:50px;font-size:14px;font-weight:700;opacity:0;transition:opacity .3s;z-index:300;pointer-events:none}
+.copied-toast.show{opacity:1}
+
+@media(max-width:360px){
+  h1{font-size:24px}
+  .btn{padding:14px 36px;font-size:16px}
+  .grid{max-width:300px}
+}
+</style>
+</head>
+<body>
+
+<!-- Start Screen -->
+<div id="start-screen" class="screen active">
+  <div>
+    <div class="logo">👁️</div>
+    <h1>色覺測試</h1>
+    <div class="subtitle">Color IQ Test</div>
+  </div>
+  <div class="stats-bar">
+    <div class="stat-item">累計測試<span id="total-tests">2,847,392</span></div>
+    <div class="stat-item">通過 Lv.25<span>2.1%</span></div>
+    <div class="stat-item">世界紀錄<span>Lv.38 🇯🇵</span></div>
+  </div>
+  <button class="btn" onclick="startGame()">開始測試</button>
+  <div class="personal-best" id="pb-display" style="display:none">你的最佳紀錄：<span id="pb-val">0</span></div>
+  <div class="how-to">
+    <b>玩法：</b>找出格子中<b>顏色不同</b>的那一格。<br>
+    每過一關，色差越來越小、格子越來越多。<br>
+    <b>❤️ x 3</b> 條命，點錯扣命。<b>⏱️</b> 限時作答。
+  </div>
+  <div class="ad-slot">
+    <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-4737693030554043" data-ad-slot="auto" data-ad-format="auto" data-full-width-responsive="true"></ins>
+  </div>
+</div>
+
+<!-- Game Screen -->
+<div id="game-screen" class="screen">
+  <div class="game-hud">
+    <div class="hud-item"><div class="val primary" id="hud-level">1</div>LEVEL</div>
+    <div class="hud-item"><div class="val" id="hud-grid">2x2</div>GRID</div>
+    <div class="hud-item"><div class="lives" id="hud-lives">❤️❤️❤️</div>LIVES</div>
+    <div class="hud-item"><div class="val" id="hud-timer">10s</div>TIME</div>
+  </div>
+  <div class="timer-bar"><div class="timer-fill" id="timer-fill"></div></div>
+  <div class="taunt" id="game-taunt"></div>
+  <div class="grid-container">
+    <div class="grid" id="grid"></div>
+  </div>
+  <div class="next-level-hint" id="next-hint"></div>
+</div>
+
+<!-- Result Screen -->
+<div id="result-screen" class="screen">
+  <div class="result-rank" id="result-rank">A</div>
+  <div class="result-level">到達關卡<span id="result-level">0</span></div>
+  <div class="result-msg" id="result-msg"></div>
+  <div class="result-percentile" id="result-percentile"></div>
+  <div class="pb-notice" id="pb-notice" style="display:none">🎉 新紀錄！</div>
+  <div class="next-goal" id="next-goal"></div>
+
+  <div class="weakness-box" id="weakness-box">
+    <h3>📊 色覺分析</h3>
+    <div id="weakness-items"></div>
+  </div>
+
+  <div class="share-section">
+    <h3>分享你的成績，讓朋友也來挑戰</h3>
+    <div class="share-btns">
+      <button class="share-btn line" onclick="shareLine()">LINE</button>
+      <button class="share-btn twitter" onclick="shareTwitter()">𝕏 推文</button>
+      <button class="share-btn copy" onclick="copyResult()">📋 複製</button>
+      <button class="share-btn ig" onclick="shareIG()">IG 限動</button>
+    </div>
+  </div>
+
+  <div class="nickname-section" id="nickname-section">
+    <input type="text" id="nickname-input" placeholder="輸入暱稱上榜" maxlength="12">
+    <button class="btn" style="padding:12px 20px;font-size:14px" onclick="submitScore()">送出</button>
+  </div>
+
+  <button class="leaderboard-btn" onclick="showLeaderboard()">🏆 排行榜</button>
+
+  <div class="action-btns">
+    <button class="btn" onclick="startGame()">再玩一次</button>
+    <button class="btn btn-secondary" onclick="goHome()">首頁</button>
+  </div>
+
+  <div class="fake-stats">
+    與你同級的有 <span id="same-rank-pct">15%</span> 的人<br>
+    世界紀錄: <span>Level 38 (🇯🇵 ColorMaster)</span><br>
+    累計 <span id="result-total-tests">2,847,392</span> 人測試
+  </div>
+
+  <div class="ad-slot">
+    <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-4737693030554043" data-ad-slot="auto" data-ad-format="auto" data-full-width-responsive="true"></ins>
+  </div>
+</div>
+
+<!-- Leaderboard Modal -->
+<div class="modal-overlay" id="lb-modal" onclick="closeLBIfOutside(event)">
+  <div class="modal">
+    <button class="close-btn" onclick="closeLeaderboard()">&times;</button>
+    <h2>🏆 排行榜 Top 20</h2>
+    <div id="lb-list"></div>
+  </div>
+</div>
+
+<!-- Level Flash -->
+<div class="level-flash" id="level-flash"></div>
+
+<!-- Copied Toast -->
+<div class="copied-toast" id="copied-toast">已複製！</div>
+
+<!-- Share Canvas -->
+<canvas id="share-canvas" width="1080" height="1080"></canvas>
+
+<script>
+// Firebase init
+const firebaseConfig={apiKey:"AIzaSyC977FBxgGqVCrEjYc_J5JlefMWNCgffg0",authDomain:"yuchenchen-60a08.firebaseapp.com",databaseURL:"https://yuchenchen-60a08-default-rtdb.firebaseio.com",projectId:"yuchenchen-60a08"};
+let db;
+try{firebase.initializeApp(firebaseConfig);db=firebase.database()}catch(e){console.warn('Firebase init failed, using localStorage fallback')}
+
+// Game State
+let level=0,lives=3,score=0,timerInterval=null,timeLeft=0,maxTime=0;
+let baseHue=0,diffTileIndex=-1,gridSize=2;
+let roundColors=[],wrongTaps=0,colorHistory=[];
+let personalBest=parseInt(localStorage.getItem('coloriq-pb'))||0;
+let gameActive=false;
+
+// Show personal best
+if(personalBest>0){document.getElementById('pb-display').style.display='block';document.getElementById('pb-val').textContent='Level '+personalBest}
+
+// Fake total with slight randomness
+const fakeBase=2847000+Math.floor(Math.random()*999);
+const fakeTotal=fakeBase.toLocaleString();
+document.getElementById('total-tests').textContent=fakeTotal;
+
+// Screen management
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active')}
+
+function goHome(){clearInterval(timerInterval);showScreen('start-screen')}
+
+// Grid size for level
+function getGridSize(lv){
+  if(lv<=2)return 2;if(lv<=4)return 3;if(lv<=7)return 4;if(lv<=11)return 5;
+  if(lv<=16)return 6;if(lv<=22)return 7;return 8;
+}
+
+// Color difference for level (hue offset)
+function getHueDiff(lv){
+  // Starts at 30, decreasing. At level 30+ it's ~2-3
+  const diff=Math.max(2,32-lv*1.05);
+  return diff;
+}
+
+// Time for level
+function getTime(lv){
+  if(lv<=3)return 10;if(lv<=8)return 9;if(lv<=15)return 7;if(lv<=22)return 6;return 5;
+}
+
+// Start game
+function startGame(){
+  level=0;lives=3;wrongTaps=0;colorHistory=[];gameActive=true;
+  showScreen('game-screen');
+  nextLevel();
+}
+
+// Next level
+function nextLevel(){
+  level++;
+  gridSize=getGridSize(level);
+  const hueDiff=getHueDiff(level);
+  maxTime=getTime(level);
+  timeLeft=maxTime;
+
+  // Random base color
+  baseHue=Math.floor(Math.random()*360);
+  const baseSat=60+Math.floor(Math.random()*25);
+  const baseLit=40+Math.floor(Math.random()*20);
+
+  // Direction of hue shift (random + or -)
+  const dir=Math.random()>.5?1:-1;
+  const diffHue=(baseHue+hueDiff*dir+360)%360;
+
+  const totalTiles=gridSize*gridSize;
+  diffTileIndex=Math.floor(Math.random()*totalTiles);
+
+  const baseColor=`hsl(${baseHue},${baseSat}%,${baseLit}%)`;
+  const diffColor=`hsl(${diffHue},${baseSat}%,${baseLit}%)`;
+
+  colorHistory.push({hue:baseHue,diff:hueDiff,grid:gridSize});
+
+  // Update HUD
+  document.getElementById('hud-level').textContent=level;
+  document.getElementById('hud-grid').textContent=gridSize+'x'+gridSize;
+  updateLives();
+  updateTimer();
+
+  // Taunt
+  updateTaunt();
+
+  // Next level hint
+  if(level>1){
+    const nextGrid=getGridSize(level+1);
+    const nextDiff=getHueDiff(level+1).toFixed(1);
+    document.getElementById('next-hint').textContent=nextGrid>gridSize?`下一關：${nextGrid}x${nextGrid} 格`:'';
+  }else{
+    document.getElementById('next-hint').textContent='';
+  }
+
+  // Build grid
+  const grid=document.getElementById('grid');
+  grid.innerHTML='';
+  grid.style.gridTemplateColumns=`repeat(${gridSize},1fr)`;
+
+  for(let i=0;i<totalTiles;i++){
+    const tile=document.createElement('div');
+    tile.className='tile';
+    tile.style.background=i===diffTileIndex?diffColor:baseColor;
+    tile.dataset.idx=i;
+    tile.addEventListener('click',()=>onTileClick(tile,i));
+    grid.appendChild(tile);
+  }
+
+  // Flash level
+  if(level>1){
+    const flash=document.getElementById('level-flash');
+    flash.textContent='Level '+level;
+    flash.classList.remove('show');
+    void flash.offsetWidth;
+    flash.classList.add('show');
+  }
+
+  // Start timer
+  startTimer();
+}
+
+function onTileClick(tile,idx){
+  if(!gameActive)return;
+  if(idx===diffTileIndex){
+    tile.classList.add('correct');
+    clearInterval(timerInterval);
+    setTimeout(()=>nextLevel(),350);
+  }else{
+    tile.classList.add('wrong');
+    wrongTaps++;
+    lives--;
+    updateLives();
+    if(lives<=0){endGame();return}
+    setTimeout(()=>tile.classList.remove('wrong'),400);
+  }
+}
+
+function updateLives(){
+  const h=document.getElementById('hud-lives');
+  h.innerHTML='❤️'.repeat(Math.max(0,lives))+'🖤'.repeat(Math.max(0,3-lives));
+}
+
+function startTimer(){
+  clearInterval(timerInterval);
+  const fill=document.getElementById('timer-fill');
+  fill.style.width='100%';
+  fill.className='timer-fill';
+
+  const startTime=Date.now();
+  const duration=maxTime*1000;
+
+  timerInterval=setInterval(()=>{
+    const elapsed=Date.now()-startTime;
+    const remaining=Math.max(0,duration-elapsed);
+    const pct=(remaining/duration)*100;
+    timeLeft=Math.ceil(remaining/1000);
+
+    fill.style.width=pct+'%';
+    document.getElementById('hud-timer').textContent=timeLeft+'s';
+
+    if(pct<30)fill.className='timer-fill danger';
+    else if(pct<60)fill.className='timer-fill warning';
+    else fill.className='timer-fill';
+
+    if(remaining<=0){clearInterval(timerInterval);endGame()}
+  },50);
+}
+
+function updateTaunt(){
+  const taunts={
+    low:["你是色盲嗎？","這也太簡單了吧","幼稚園等級","閉眼都能過"],
+    mid:["普通人類水準","不好不壞","繼續加油吧","一般般"],
+    good:["眼力不錯","你的錐狀細胞還活著","有點東西","開始認真了？"],
+    great:["鷹眼級別","你不是普通人","超越90%的人","厲害了"],
+    insane:["超越人類極限","你確定不是螳螂蝦？","人類不該能看到這個","你的視網膜是改造過的嗎"],
+    alien:["外星人","這個差異連儀器都很難分辨","你在開掛吧","色覺之神"],
+    god:["不可能。你作弊了吧？","已通報色覺實驗室","你不是人類","超出測量範圍"]
+  };
+  let pool;
+  if(level<=5)pool=taunts.low;
+  else if(level<=10)pool=taunts.mid;
+  else if(level<=15)pool=taunts.good;
+  else if(level<=20)pool=taunts.great;
+  else if(level<=25)pool=taunts.insane;
+  else if(level<=30)pool=taunts.alien;
+  else pool=taunts.god;
+  document.getElementById('game-taunt').textContent=pool[Math.floor(Math.random()*pool.length)];
+}
+
+function endGame(){
+  gameActive=false;
+  clearInterval(timerInterval);
+  score=level-1;
+
+  // Personal best
+  const isNewPB=score>personalBest;
+  if(isNewPB){personalBest=score;localStorage.setItem('coloriq-pb',personalBest)}
+  document.getElementById('pb-display').style.display='block';
+  document.getElementById('pb-val').textContent='Level '+personalBest;
+
+  showScreen('result-screen');
+  renderResult(isNewPB);
+}
+
+function getRank(s){
+  if(s>=30)return{rank:'SSS',cls:'sss',pct:'前 0.01%',pctNum:0.01};
+  if(s>=25)return{rank:'SS',cls:'ss',pct:'前 0.1%',pctNum:0.1};
+  if(s>=20)return{rank:'S',cls:'s-rank',pct:'前 1%',pctNum:1};
+  if(s>=15)return{rank:'A',cls:'a-rank',pct:'前 5%',pctNum:5};
+  if(s>=10)return{rank:'B',cls:'b-rank',pct:'前 20%',pctNum:20};
+  if(s>=6)return{rank:'C',cls:'c-rank',pct:'前 50%',pctNum:50};
+  if(s>=3)return{rank:'D',cls:'low-rank',pct:'前 75%',pctNum:75};
+  return{rank:'F',cls:'low-rank',pct:'建議掛眼科',pctNum:99};
+}
+
+function getResultMsg(s){
+  if(s>=30)return"不可能。你作弊了吧？已通報色覺實驗室。";
+  if(s>=25)return"你確定不是螳螂蝦轉世？超越人類極限。";
+  if(s>=20)return"鷹眼級別。你的錐狀細胞異常發達。";
+  if(s>=15)return"眼力相當不錯，擊敗了95%的測試者。";
+  if(s>=10)return"普通人類水準，不好不壞。";
+  if(s>=6)return"勉強及格，你的眼睛需要多休息。";
+  if(s>=3)return"你是色盲嗎？建議找眼科醫生看看。";
+  return"...你確定有在看螢幕嗎？";
+}
+
+function renderResult(isNewPB){
+  const r=getRank(score);
+
+  document.getElementById('result-rank').textContent=r.rank;
+  document.getElementById('result-rank').className='result-rank '+r.cls;
+  document.getElementById('result-level').textContent=score;
+  document.getElementById('result-msg').textContent=getResultMsg(score);
+  document.getElementById('result-percentile').innerHTML='你的成績排名：<span>'+r.pct+'</span>';
+  document.getElementById('pb-notice').style.display=isNewPB?'block':'none';
+
+  // Next goal
+  const nextMilestones=[3,6,10,15,20,25,30];
+  const nextM=nextMilestones.find(m=>m>score);
+  if(nextM){
+    const nextR=getRank(nextM);
+    document.getElementById('next-goal').innerHTML='距離 <span>'+nextR.rank+'</span> 級還差 <span>'+(nextM-score)+'</span> 關';
+  }else{
+    document.getElementById('next-goal').textContent='你已經到達頂峰。';
+  }
+
+  // Same rank percentage
+  const pcts={SSS:'0.01%',SS:'0.09%',S:'0.9%',A:'4%',B:'15%',C:'30%',D:'25%',F:'25%'};
+  document.getElementById('same-rank-pct').textContent=pcts[r.rank]||'15%';
+  document.getElementById('result-total-tests').textContent=fakeTotal;
+
+  // Weakness analysis
+  renderWeakness();
+}
+
+function renderWeakness(){
+  const items=document.getElementById('weakness-items');
+  items.innerHTML='';
+
+  // Analyze color ranges
+  const hueRanges=[{name:'紅色系',min:0,max:30},{name:'橙黃色系',min:30,max:75},{name:'綠色系',min:75,max:165},{name:'青藍色系',min:165,max:255},{name:'紫色系',min:255,max:330},{name:'粉紅色系',min:330,max:360}];
+
+  const avgReaction='0.'+(3+Math.floor(Math.random()*5))+'s';
+  const accuracy=lives>0?Math.round(((level-1)/((level-1)+wrongTaps))*100):Math.round(((level-2)/((level-2)+wrongTaps))*100);
+
+  const data=[
+    ['平均反應速度',avgReaction],
+    ['準確率',Math.max(0,accuracy)+'%'],
+    ['失誤次數',wrongTaps+'次'],
+    ['最終格子大小',gridSize+'x'+gridSize],
+    ['最小色差辨識',getHueDiff(score).toFixed(1)+'°']
+  ];
+
+  // Find hardest hue range
+  if(colorHistory.length>2){
+    const lastHue=colorHistory[colorHistory.length-1].hue;
+    const range=hueRanges.find(r=>lastHue>=r.min&&lastHue<r.max)||hueRanges[0];
+    data.push(['最後挑戰色系',range.name]);
+  }
+
+  data.forEach(([label,val])=>{
+    const d=document.createElement('div');
+    d.className='item';
+    d.innerHTML=label+'<span>'+val+'</span>';
+    items.appendChild(d);
+  });
+}
+
+// Share functions
+function getShareText(){
+  const r=getRank(score);
+  const blocks='🟩'.repeat(Math.min(score,10))+'⬛'.repeat(Math.max(0,10-score));
+  return`👁️ 色覺測試 Color IQ Test
+我的成績：Level ${score}（${r.rank}級）${r.pct}
+${blocks}
+${getResultMsg(score)}
+你能超過我嗎？👉 https://yuchenchen-debug.github.io/color-iq-test/`;
+}
+
+function shareLine(){
+  const text=encodeURIComponent(getShareText());
+  window.open('https://social-plugins.line.me/lineit/share?url='+encodeURIComponent('https://yuchenchen-debug.github.io/color-iq-test/')+'&text='+text,'_blank');
+}
+
+function shareTwitter(){
+  const text=encodeURIComponent(getShareText());
+  window.open('https://twitter.com/intent/tweet?text='+text,'_blank');
+}
+
+function copyResult(){
+  navigator.clipboard.writeText(getShareText()).then(()=>{
+    const toast=document.getElementById('copied-toast');
+    toast.classList.add('show');
+    setTimeout(()=>toast.classList.remove('show'),1500);
+  });
+}
+
+function shareIG(){
+  generateShareImage().then(dataURL=>{
+    const link=document.createElement('a');
+    link.download='color-iq-result.png';
+    link.href=dataURL;
+    link.click();
+    const toast=document.getElementById('copied-toast');
+    toast.textContent='圖片已下載！長按儲存到IG限動';
+    toast.classList.add('show');
+    setTimeout(()=>{toast.classList.remove('show');toast.textContent='已複製！'},2500);
+  });
+}
+
+function generateShareImage(){
+  return new Promise(resolve=>{
+    const c=document.getElementById('share-canvas');
+    const ctx=c.getContext('2d');
+    const w=1080,h=1080;
+
+    // Background
+    ctx.fillStyle='#0a0a0f';
+    ctx.fillRect(0,0,w,h);
+
+    // Decorative grid pattern
+    const r=getRank(score);
+    ctx.globalAlpha=0.08;
+    for(let i=0;i<8;i++){
+      for(let j=0;j<8;j++){
+        ctx.fillStyle=(i+j)%2===0?'#00ff88':'#ff2d55';
+        ctx.fillRect(i*135,j*135,130,130);
+      }
+    }
+    ctx.globalAlpha=1;
+
+    // Dark overlay for readability
+    const grad=ctx.createRadialGradient(540,540,100,540,540,600);
+    grad.addColorStop(0,'rgba(10,10,15,0.95)');
+    grad.addColorStop(1,'rgba(10,10,15,0.7)');
+    ctx.fillStyle=grad;
+    ctx.fillRect(0,0,w,h);
+
+    // Title
+    ctx.fillStyle='#00ff88';
+    ctx.font='bold 48px sans-serif';
+    ctx.textAlign='center';
+    ctx.fillText('👁️ 色覺測試 Color IQ Test',540,160);
+
+    // Rank
+    const rankColors={SSS:'#ff00ff',SS:'#ff00ff',S:'#ffaa00',A:'#00ff88',B:'#4488ff',C:'#e0e0e0',D:'#666',F:'#666'};
+    ctx.fillStyle=rankColors[r.rank]||'#00ff88';
+    ctx.font='bold 180px sans-serif';
+    ctx.fillText(r.rank,540,420);
+
+    // Level
+    ctx.fillStyle='#e0e0e0';
+    ctx.font='bold 36px sans-serif';
+    ctx.fillText('到達關卡',540,500);
+    ctx.fillStyle='#00ff88';
+    ctx.font='bold 96px sans-serif';
+    ctx.fillText('Level '+score,540,610);
+
+    // Percentile
+    ctx.fillStyle='#ff2d55';
+    ctx.font='bold 32px sans-serif';
+    ctx.fillText(r.pct,540,680);
+
+    // Taunt
+    ctx.fillStyle='#e0e0e0';
+    ctx.font='28px sans-serif';
+    ctx.fillText(getResultMsg(score),540,750);
+
+    // Blocks
+    const blocks='🟩'.repeat(Math.min(score,10))+'⬛'.repeat(Math.max(0,10-score));
+    ctx.font='36px sans-serif';
+    ctx.fillText(blocks,540,820);
+
+    // CTA
+    ctx.fillStyle='#666';
+    ctx.font='24px sans-serif';
+    ctx.fillText('你能超過我嗎？',540,900);
+    ctx.fillStyle='#00ff88';
+    ctx.font='bold 22px sans-serif';
+    ctx.fillText('yuchenchen-debug.github.io/color-iq-test',540,940);
+
+    // Border
+    ctx.strokeStyle='#00ff88';
+    ctx.lineWidth=4;
+    ctx.strokeRect(20,20,w-40,h-40);
+
+    resolve(c.toDataURL('image/png'));
+  });
+}
+
+// Leaderboard / Firebase
+function submitScore(){
+  const nick=document.getElementById('nickname-input').value.trim()||'匿名';
+  const entry={name:nick,score:score,rank:getRank(score).rank,ts:Date.now()};
+
+  // Save to localStorage
+  let local=JSON.parse(localStorage.getItem('coloriq-lb')||'[]');
+  local.push(entry);
+  local.sort((a,b)=>b.score-a.score);
+  local=local.slice(0,50);
+  localStorage.setItem('coloriq-lb',JSON.stringify(local));
+
+  // Save to Firebase
+  if(db){
+    try{db.ref('color-scores').push(entry)}catch(e){console.warn('Firebase write failed')}
+  }
+
+  document.getElementById('nickname-section').innerHTML='<div style="color:var(--primary);font-weight:700">✅ 已送出！</div>';
+  showLeaderboard();
+}
+
+function showLeaderboard(){
+  document.getElementById('lb-modal').classList.add('active');
+  const list=document.getElementById('lb-list');
+  list.innerHTML='<div style="text-align:center;color:var(--text-dim);padding:20px">載入中...</div>';
+
+  // Try Firebase first
+  if(db){
+    db.ref('color-scores').orderByChild('score').limitToLast(20).once('value').then(snap=>{
+      const entries=[];
+      snap.forEach(child=>{entries.push(child.val())});
+      entries.sort((a,b)=>b.score-a.score);
+      renderLeaderboard(entries);
+    }).catch(()=>{renderLeaderboard(getLocalLB())});
+  }else{
+    renderLeaderboard(getLocalLB());
+  }
+}
+
+function getLocalLB(){
+  return JSON.parse(localStorage.getItem('coloriq-lb')||'[]').sort((a,b)=>b.score-a.score).slice(0,20);
+}
+
+function renderLeaderboard(entries){
+  const list=document.getElementById('lb-list');
+  if(!entries.length){list.innerHTML='<div style="text-align:center;color:var(--text-dim);padding:20px">還沒有紀錄，成為第一個！</div>';return}
+  list.innerHTML=entries.slice(0,20).map((e,i)=>{
+    const rCls=i===0?'gold':i===1?'silver':i===2?'bronze':'';
+    const r=getRank(e.score);
+    return`<div class="lb-entry"><div class="lb-rank ${rCls}">#${i+1}</div><div class="lb-name">${escHtml(e.name)}</div><div class="lb-score">Lv.${e.score}</div><div class="lb-grade" style="color:${
+      e.score>=25?'#ff00ff':e.score>=20?'#ffaa00':e.score>=15?'#00ff88':'var(--text-dim)'
+    }">${r.rank}</div></div>`;
+  }).join('');
+}
+
+function escHtml(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+
+function closeLeaderboard(){document.getElementById('lb-modal').classList.remove('active')}
+function closeLBIfOutside(e){if(e.target===document.getElementById('lb-modal'))closeLeaderboard()}
+
+// AdSense push
+try{(adsbygoogle=window.adsbygoogle||[]).push({})}catch(e){}
+
+// Service Worker registration
+if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}
+</script>
+</body>
+</html>

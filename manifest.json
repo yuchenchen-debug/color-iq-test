@@ -1,0 +1,19 @@
+{
+  "name": "色覺測試 Color IQ Test",
+  "short_name": "色覺測試",
+  "description": "挑戰你的色覺極限！找出不同顏色的格子，看看你能通過第幾關。",
+  "start_url": "/color-iq-test/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0a0a0f",
+  "theme_color": "#0a0a0f",
+  "lang": "zh-TW",
+  "categories": ["games", "entertainment"],
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👁️</text></svg>",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
