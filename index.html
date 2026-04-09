@@ -31,10 +31,18 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-:root{--bg:#0a0a0f;--primary:#00ff88;--secondary:#ff2d55;--surface:#14141f;--surface2:#1a1a2e;--text:#e0e0e0;--text-dim:#666;--radius:12px}
+:root{--bg:#0a0a0f;--primary:#00ff88;--secondary:#ff2d55;--surface:#14141f;--surface2:#1a1a2e;--text:#e0e0e0;--text-dim:#666;--border:#2a2a3e;--radius:12px}
 body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased}
 .screen{display:none;flex-direction:column;align-items:center;min-height:100vh;padding:20px;width:100%}
 .screen.active{display:flex}
+
+/* Language Switcher */
+.lang-switcher{position:fixed;top:12px;right:12px;z-index:150}
+.lang-btn{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:6px 12px;border-radius:20px;font-size:13px;cursor:pointer}
+.lang-dropdown{position:absolute;top:100%;right:0;margin-top:4px;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;display:none;min-width:140px}
+.lang-dropdown.open{display:block}
+.lang-option{padding:8px 14px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:8px}
+.lang-option:hover{background:var(--border)}
 
 /* Start Screen */
 #start-screen{justify-content:center;gap:24px;text-align:center}
@@ -156,21 +164,39 @@ h1{font-size:28px;font-weight:800;background:linear-gradient(135deg,var(--primar
 </head>
 <body>
 
+<!-- Language Switcher -->
+<div class="lang-switcher">
+  <button class="lang-btn" id="lang-btn" onclick="toggleLangDropdown()">🇹🇼 繁體中文</button>
+  <div class="lang-dropdown" id="lang-dropdown">
+    <div class="lang-option" onclick="setLang('zh-TW')">🇹🇼 繁體中文</div>
+    <div class="lang-option" onclick="setLang('en')">🇺🇸 English</div>
+    <div class="lang-option" onclick="setLang('ja')">🇯🇵 日本語</div>
+    <div class="lang-option" onclick="setLang('ko')">🇰🇷 한국어</div>
+    <div class="lang-option" onclick="setLang('es')">🇪🇸 Español</div>
+    <div class="lang-option" onclick="setLang('pt')">🇧🇷 Português</div>
+    <div class="lang-option" onclick="setLang('de')">🇩🇪 Deutsch</div>
+    <div class="lang-option" onclick="setLang('fr')">🇫🇷 Français</div>
+    <div class="lang-option" onclick="setLang('th')">🇹🇭 ไทย</div>
+    <div class="lang-option" onclick="setLang('id')">🇮🇩 Indonesia</div>
+    <div class="lang-option" onclick="setLang('vi')">🇻🇳 Tiếng Việt</div>
+  </div>
+</div>
+
 <!-- Start Screen -->
 <div id="start-screen" class="screen active">
   <div>
     <div class="logo">👁️</div>
-    <h1>色覺測試</h1>
-    <div class="subtitle">Color IQ Test</div>
+    <h1 data-i18n="title">色覺測試</h1>
+    <div class="subtitle" data-i18n="subtitle">Color IQ Test</div>
   </div>
   <div class="stats-bar">
-    <div class="stat-item">累計測試<span id="total-tests">2,847,392</span></div>
-    <div class="stat-item">通過 Lv.25<span>2.1%</span></div>
-    <div class="stat-item">世界紀錄<span>Lv.38 🇯🇵</span></div>
+    <div class="stat-item"><span data-i18n="statTests"></span><span id="total-tests">2,847,392</span></div>
+    <div class="stat-item"><span data-i18n="statPassLv25"></span><span>2.1%</span></div>
+    <div class="stat-item"><span data-i18n="statWorldRecord"></span><span>Lv.38 🇯🇵</span></div>
   </div>
-  <button class="btn" onclick="startGame()">開始測試</button>
-  <div class="personal-best" id="pb-display" style="display:none">你的最佳紀錄：<span id="pb-val">0</span></div>
-  <div class="how-to">
+  <button class="btn" onclick="startGame()" data-i18n="startBtn">開始測試</button>
+  <div class="personal-best" id="pb-display" style="display:none"><span data-i18n="personalBest">你的最佳紀錄：</span><span id="pb-val">0</span></div>
+  <div class="how-to" id="how-to-box" data-i18n-html="howTo">
     <b>玩法：</b>找出格子中<b>顏色不同</b>的那一格。<br>
     每過一關，色差越來越小、格子越來越多。<br>
     <b>❤️ x 3</b> 條命，點錯扣命。<b>⏱️</b> 限時作答。
@@ -183,10 +209,10 @@ h1{font-size:28px;font-weight:800;background:linear-gradient(135deg,var(--primar
 <!-- Game Screen -->
 <div id="game-screen" class="screen">
   <div class="game-hud">
-    <div class="hud-item"><div class="val primary" id="hud-level">1</div>LEVEL</div>
-    <div class="hud-item"><div class="val" id="hud-grid">2x2</div>GRID</div>
-    <div class="hud-item"><div class="lives" id="hud-lives">❤️❤️❤️</div>LIVES</div>
-    <div class="hud-item"><div class="val" id="hud-timer">10s</div>TIME</div>
+    <div class="hud-item"><div class="val primary" id="hud-level">1</div><span data-i18n="hudLevel">LEVEL</span></div>
+    <div class="hud-item"><div class="val" id="hud-grid">2x2</div><span data-i18n="hudGrid">GRID</span></div>
+    <div class="hud-item"><div class="lives" id="hud-lives">❤️❤️❤️</div><span data-i18n="hudLives">LIVES</span></div>
+    <div class="hud-item"><div class="val" id="hud-timer">10s</div><span data-i18n="hudTime">TIME</span></div>
   </div>
   <div class="timer-bar"><div class="timer-fill" id="timer-fill"></div></div>
   <div class="taunt" id="game-taunt"></div>
@@ -199,44 +225,40 @@ h1{font-size:28px;font-weight:800;background:linear-gradient(135deg,var(--primar
 <!-- Result Screen -->
 <div id="result-screen" class="screen">
   <div class="result-rank" id="result-rank">A</div>
-  <div class="result-level">到達關卡<span id="result-level">0</span></div>
+  <div class="result-level"><span data-i18n="reachedLevel">到達關卡</span><span id="result-level">0</span></div>
   <div class="result-msg" id="result-msg"></div>
   <div class="result-percentile" id="result-percentile"></div>
-  <div class="pb-notice" id="pb-notice" style="display:none">🎉 新紀錄！</div>
+  <div class="pb-notice" id="pb-notice" style="display:none" data-i18n="newRecord">🎉 新紀錄！</div>
   <div class="next-goal" id="next-goal"></div>
 
   <div class="weakness-box" id="weakness-box">
-    <h3>📊 色覺分析</h3>
+    <h3 data-i18n="analysisTitle">📊 色覺分析</h3>
     <div id="weakness-items"></div>
   </div>
 
   <div class="share-section">
-    <h3>分享你的成績，讓朋友也來挑戰</h3>
+    <h3 data-i18n="shareTitle">分享你的成績，讓朋友也來挑戰</h3>
     <div class="share-btns">
       <button class="share-btn line" onclick="shareLine()">LINE</button>
-      <button class="share-btn twitter" onclick="shareTwitter()">𝕏 推文</button>
-      <button class="share-btn copy" onclick="copyResult()">📋 複製</button>
-      <button class="share-btn ig" onclick="shareIG()">IG 限動</button>
+      <button class="share-btn twitter" onclick="shareTwitter()"><span data-i18n="shareTwitter">𝕏 推文</span></button>
+      <button class="share-btn copy" onclick="copyResult()"><span data-i18n="shareCopy">📋 複製</span></button>
+      <button class="share-btn ig" onclick="shareIG()"><span data-i18n="shareIG">IG 限動</span></button>
     </div>
   </div>
 
   <div class="nickname-section" id="nickname-section">
-    <input type="text" id="nickname-input" placeholder="輸入暱稱上榜" maxlength="12">
-    <button class="btn" style="padding:12px 20px;font-size:14px" onclick="submitScore()">送出</button>
+    <input type="text" id="nickname-input" data-i18n-placeholder="nicknamePlaceholder" placeholder="輸入暱稱上榜" maxlength="12">
+    <button class="btn" style="padding:12px 20px;font-size:14px" onclick="submitScore()" data-i18n="submitBtn">送出</button>
   </div>
 
-  <button class="leaderboard-btn" onclick="showLeaderboard()">🏆 排行榜</button>
+  <button class="leaderboard-btn" onclick="showLeaderboard()" data-i18n="leaderboardBtn">🏆 排行榜</button>
 
   <div class="action-btns">
-    <button class="btn" onclick="startGame()">再玩一次</button>
-    <button class="btn btn-secondary" onclick="goHome()">首頁</button>
+    <button class="btn" onclick="startGame()" data-i18n="playAgain">再玩一次</button>
+    <button class="btn btn-secondary" onclick="goHome()" data-i18n="homeBtn">首頁</button>
   </div>
 
-  <div class="fake-stats">
-    與你同級的有 <span id="same-rank-pct">15%</span> 的人<br>
-    世界紀錄: <span>Level 38 (🇯🇵 ColorMaster)</span><br>
-    累計 <span id="result-total-tests">2,847,392</span> 人測試
-  </div>
+  <div class="fake-stats" id="fake-stats-box"></div>
 
   <div class="ad-slot">
     <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-4737693030554043" data-ad-slot="auto" data-ad-format="auto" data-full-width-responsive="true"></ins>
@@ -247,7 +269,7 @@ h1{font-size:28px;font-weight:800;background:linear-gradient(135deg,var(--primar
 <div class="modal-overlay" id="lb-modal" onclick="closeLBIfOutside(event)">
   <div class="modal">
     <button class="close-btn" onclick="closeLeaderboard()">&times;</button>
-    <h2>🏆 排行榜 Top 20</h2>
+    <h2 data-i18n="leaderboardTitle">🏆 排行榜 Top 20</h2>
     <div id="lb-list"></div>
   </div>
 </div>
@@ -262,6 +284,719 @@ h1{font-size:28px;font-weight:800;background:linear-gradient(135deg,var(--primar
 <canvas id="share-canvas" width="1080" height="1080"></canvas>
 
 <script>
+// ============================================================
+// i18n - All translations
+// ============================================================
+const LANG = {
+  'zh-TW': {
+    flag: '🇹🇼', name: '繁體中文',
+    title: '色覺測試', subtitle: 'Color IQ Test',
+    statTests: '累計測試', statPassLv25: '通過 Lv.25', statWorldRecord: '世界紀錄',
+    startBtn: '開始測試', personalBest: '你的最佳紀錄：',
+    howTo: '<b>玩法：</b>找出格子中<b>顏色不同</b>的那一格。<br>每過一關，色差越來越小、格子越來越多。<br><b>❤️ x 3</b> 條命，點錯扣命。<b>⏱️</b> 限時作答。',
+    hudLevel: 'LEVEL', hudGrid: 'GRID', hudLives: 'LIVES', hudTime: 'TIME',
+    reachedLevel: '到達關卡', newRecord: '🎉 新紀錄！',
+    analysisTitle: '📊 色覺分析',
+    shareTitle: '分享你的成績，讓朋友也來挑戰',
+    shareTwitter: '𝕏 推文', shareCopy: '📋 複製', shareIG: 'IG 限動',
+    nicknamePlaceholder: '輸入暱稱上榜', submitBtn: '送出',
+    leaderboardBtn: '🏆 排行榜', leaderboardTitle: '🏆 排行榜 Top 20',
+    playAgain: '再玩一次', homeBtn: '首頁',
+    copiedToast: '已複製！', imgDownloaded: '圖片已下載！長按儲存到IG限動',
+    submitted: '✅ 已送出！', loading: '載入中...', noRecords: '還沒有紀錄，成為第一個！',
+    anonymous: '匿名',
+    nextLevelGrid: '下一關：{g}x{g} 格',
+    rankYour: '你的成績排名：', topPct: '前 {n}%', seeDoctor: '建議掛眼科',
+    nextGoal: '距離 {rank} 級還差 {n} 關', reachedPeak: '你已經到達頂峰。',
+    fakeStats: '與你同級的有 <span>{pct}</span> 的人<br>世界紀錄: <span>Level 38 (🇯🇵 ColorMaster)</span><br>累計 <span>{total}</span> 人測試',
+    shareText: '👁️ 色覺測試 Color IQ Test\n我的成績：Level {score}（{rank}級）{pct}\n{blocks}\n{msg}\n你能超過我嗎？👉 https://yuchenchen-debug.github.io/color-iq-test/',
+    shareImgTitle: '👁️ 色覺測試 Color IQ Test', shareImgReached: '到達關卡', shareImgCTA: '你能超過我嗎？',
+    weaknessAvgReaction: '平均反應速度', weaknessAccuracy: '準確率', weaknessMistakes: '失誤次數',
+    weaknessFinalGrid: '最終格子大小', weaknessMinDiff: '最小色差辨識', weaknessLastHue: '最後挑戰色系',
+    mistakeUnit: '{n}次',
+    hueRed: '紅色系', hueOrangeYellow: '橙黃色系', hueGreen: '綠色系', hueCyanBlue: '青藍色系', huePurple: '紫色系', huePink: '粉紅色系',
+    moreGames: '🎮 更多挑戰',
+    gameMillisecond: '千分之一秒', gameMillisecondHook: '只有 0.01% 拿到 SSS 級',
+    gameReaction: '反應力測試', gameReactionHook: '你比 273ms 更快嗎？',
+    gameMemory: '記憶極限', gameMemoryHook: '一般人記住 7 個，你呢？',
+    metaTitle: '色覺測試 Color IQ Test - 你的眼睛能分辨多細微的色差？',
+    metaOgTitle: '色覺測試 - 我達到了 Level ??? 🎯',
+    metaOgDesc: '挑戰你的色覺極限！累計超過284萬人測試，只有2.1%通過Level 25。你能到第幾關？',
+    taunts: {
+      low: ["你是色盲嗎？","這也太簡單了吧","幼稚園等級","閉眼都能過"],
+      mid: ["普通人類水準","不好不壞","繼續加油吧","一般般"],
+      good: ["眼力不錯","你的錐狀細胞還活著","有點東西","開始認真了？"],
+      great: ["鷹眼級別","你不是普通人","超越90%的人","厲害了"],
+      insane: ["超越人類極限","你確定不是螳螂蝦？","人類不該能看到這個","你的視網膜是改造過的嗎"],
+      alien: ["外星人","這個差異連儀器都很難分辨","你在開掛吧","色覺之神"],
+      god: ["不可能。你作弊了吧？","已通報色覺實驗室","你不是人類","超出測量範圍"]
+    },
+    resultMsg: {
+      30: "不可能。你作弊了吧？已通報色覺實驗室。",
+      25: "你確定不是螳螂蝦轉世？超越人類極限。",
+      20: "鷹眼級別。你的錐狀細胞異常發達。",
+      15: "眼力相當不錯，擊敗了95%的測試者。",
+      10: "普通人類水準，不好不壞。",
+      6: "勉強及格，你的眼睛需要多休息。",
+      3: "你是色盲嗎？建議找眼科醫生看看。",
+      0: "...你確定有在看螢幕嗎？"
+    }
+  },
+  'en': {
+    flag: '🇺🇸', name: 'English',
+    title: 'Color IQ Test', subtitle: 'How sharp are your eyes?',
+    statTests: 'Total tests', statPassLv25: 'Pass Lv.25', statWorldRecord: 'World record',
+    startBtn: 'START TEST', personalBest: 'Your best: ',
+    howTo: '<b>How to play:</b> Find the tile with a <b>different color</b>.<br>Each level, the difference shrinks and the grid grows.<br><b>❤️ x 3</b> lives. Wrong tap = lose a life. <b>⏱️</b> Time limit.',
+    hudLevel: 'LEVEL', hudGrid: 'GRID', hudLives: 'LIVES', hudTime: 'TIME',
+    reachedLevel: 'Reached level', newRecord: '🎉 New record!',
+    analysisTitle: '📊 Vision Analysis',
+    shareTitle: 'Share your score and challenge friends',
+    shareTwitter: '𝕏 Tweet', shareCopy: '📋 Copy', shareIG: 'IG Story',
+    nicknamePlaceholder: 'Enter nickname', submitBtn: 'Submit',
+    leaderboardBtn: '🏆 Leaderboard', leaderboardTitle: '🏆 Leaderboard Top 20',
+    playAgain: 'Play Again', homeBtn: 'Home',
+    copiedToast: 'Copied!', imgDownloaded: 'Image downloaded! Save to IG Story',
+    submitted: '✅ Submitted!', loading: 'Loading...', noRecords: 'No records yet. Be the first!',
+    anonymous: 'Anonymous',
+    nextLevelGrid: 'Next: {g}x{g} grid',
+    rankYour: 'Your ranking: ', topPct: 'Top {n}%', seeDoctor: 'See an eye doctor',
+    nextGoal: '{n} more levels to {rank}', reachedPeak: 'You\'ve reached the summit.',
+    fakeStats: '<span>{pct}</span> of players share your rank<br>World record: <span>Level 38 (🇯🇵 ColorMaster)</span><br><span>{total}</span> total tests',
+    shareText: '👁️ Color IQ Test\nMy score: Level {score} ({rank}) {pct}\n{blocks}\n{msg}\nCan you beat me? 👉 https://yuchenchen-debug.github.io/color-iq-test/',
+    shareImgTitle: '👁️ Color IQ Test', shareImgReached: 'Reached level', shareImgCTA: 'Can you beat me?',
+    weaknessAvgReaction: 'Avg reaction', weaknessAccuracy: 'Accuracy', weaknessMistakes: 'Mistakes',
+    weaknessFinalGrid: 'Final grid', weaknessMinDiff: 'Min hue diff', weaknessLastHue: 'Last hue range',
+    mistakeUnit: '{n}',
+    hueRed: 'Red', hueOrangeYellow: 'Orange-Yellow', hueGreen: 'Green', hueCyanBlue: 'Cyan-Blue', huePurple: 'Purple', huePink: 'Pink',
+    moreGames: '🎮 More Challenges',
+    gameMillisecond: 'Millisecond', gameMillisecondHook: 'Only 0.01% get SSS',
+    gameReaction: 'Reaction Test', gameReactionHook: 'Faster than 273ms?',
+    gameMemory: 'Memory Limit', gameMemoryHook: 'Average is 7. You?',
+    metaTitle: 'Color IQ Test - How subtle a color difference can you see?',
+    metaOgTitle: 'Color IQ Test - I reached Level ??? 🎯',
+    metaOgDesc: 'Test your color vision! Over 2.84M tested, only 2.1% pass Level 25. How far can you go?',
+    taunts: {
+      low: ["Are you even trying lmao","My grandma could do this blind","Skill issue fr fr","Bro this is the tutorial"],
+      mid: ["Mid. Literally mid.","Okay I guess you have eyes","Not terrible, not great","Average human moment"],
+      good: ["Okay that's kinda valid","Your cones are awake at least","Not bad, not bad at all","Starting to sweat?"],
+      great: ["Eagle eye unlocked","You're built different ngl","Top 10% energy","Okay I'm impressed"],
+      insane: ["Beyond human limits ngl","Are you a mantis shrimp??","This shouldn't be possible","Your retinas are modded"],
+      alien: ["Bro you're literally an alien","Even instruments struggle here","You're hacking aren't you","Color vision: GODLIKE"],
+      god: ["Impossible. You cheated.","Reported to color science lab","You're not human.","ERROR: beyond measurement"]
+    },
+    resultMsg: {
+      30: "Impossible. You definitely cheated. Reported.",
+      25: "Are you a mantis shrimp reborn? Beyond human limits.",
+      20: "Eagle eye tier. Your cone cells are abnormally powerful.",
+      15: "Solid eyes. You beat 95% of all testers.",
+      10: "Average human performance. Not bad, not great.",
+      6: "Barely passing. Your eyes need a vacation.",
+      3: "Are you colorblind? Seriously, see a doctor.",
+      0: "...Were you even looking at the screen?"
+    }
+  },
+  'ja': {
+    flag: '🇯🇵', name: '日本語',
+    title: '色覚テスト', subtitle: 'Color IQ Test',
+    statTests: '累計テスト数', statPassLv25: 'Lv.25 突破率', statWorldRecord: '世界記録',
+    startBtn: 'テスト開始', personalBest: 'あなたの最高記録：',
+    howTo: '<b>遊び方：</b>マス目の中から<b>色が違う</b>一枚を見つけてください。<br>レベルが上がるほど色差は小さく、マスは増えます。<br><b>❤️ x 3</b> ライフ。ミスでライフ減少。<b>⏱️</b> 制限時間あり。',
+    hudLevel: 'レベル', hudGrid: 'グリッド', hudLives: 'ライフ', hudTime: '残り時間',
+    reachedLevel: '到達レベル', newRecord: '🎉 新記録！',
+    analysisTitle: '📊 色覚分析',
+    shareTitle: '結果をシェアして友達に挑戦状を送ろう',
+    shareTwitter: '𝕏 ポスト', shareCopy: '📋 コピー', shareIG: 'IG ストーリー',
+    nicknamePlaceholder: 'ニックネームを入力', submitBtn: '送信',
+    leaderboardBtn: '🏆 ランキング', leaderboardTitle: '🏆 ランキング Top 20',
+    playAgain: 'もう一度', homeBtn: 'ホーム',
+    copiedToast: 'コピーしました！', imgDownloaded: '画像をダウンロードしました！IGストーリーに保存',
+    submitted: '✅ 送信完了！', loading: '読み込み中...', noRecords: 'まだ記録がありません。一番乗りになろう！',
+    anonymous: '匿名',
+    nextLevelGrid: '次のレベル：{g}x{g} マス',
+    rankYour: 'あなたの順位：', topPct: '上位 {n}%', seeDoctor: '眼科の受診をお勧めします',
+    nextGoal: '{rank} ランクまであと {n} レベル', reachedPeak: '頂点に到達しました。',
+    fakeStats: 'あなたと同じランク：<span>{pct}</span><br>世界記録：<span>Level 38 (🇯🇵 ColorMaster)</span><br>累計 <span>{total}</span> 人がテスト済み',
+    shareText: '👁️ 色覚テスト Color IQ Test\n私の結果：Level {score}（{rank}）{pct}\n{blocks}\n{msg}\nあなたは私を超えられる？👉 https://yuchenchen-debug.github.io/color-iq-test/',
+    shareImgTitle: '👁️ 色覚テスト Color IQ Test', shareImgReached: '到達レベル', shareImgCTA: 'あなたは超えられる？',
+    weaknessAvgReaction: '平均反応速度', weaknessAccuracy: '正確率', weaknessMistakes: 'ミス回数',
+    weaknessFinalGrid: '最終グリッドサイズ', weaknessMinDiff: '最小色差識別', weaknessLastHue: '最後の色系',
+    mistakeUnit: '{n}回',
+    hueRed: '赤系', hueOrangeYellow: '橙黄系', hueGreen: '緑系', hueCyanBlue: '青系', huePurple: '紫系', huePink: 'ピンク系',
+    moreGames: '🎮 もっとチャレンジ',
+    gameMillisecond: 'ミリ秒チャレンジ', gameMillisecondHook: 'SSS級はわずか0.01%',
+    gameReaction: '反応速度テスト', gameReactionHook: '273msより速い？',
+    gameMemory: '記憶力の限界', gameMemoryHook: '平均は7個。あなたは？',
+    metaTitle: '色覚テスト - あなたの目はどこまで見える？',
+    metaOgTitle: '色覚テスト - Level ??? に到達しました 🎯',
+    metaOgDesc: '色覚の限界に挑戦！284万人以上がテスト済み、Lv.25突破はわずか2.1%。',
+    taunts: {
+      low: ["大変恐縮ですが...色盲の可能性がございます","お疲れ様です。幼稚園レベルですね","失礼ながら、目を開けていらっしゃいますか？","ご丁寧にお答えいただきましたが、全問不正解です"],
+      mid: ["まあ、人間としては普通ですね","可もなく不可もなく。つまり凡人です","頑張ってはいるようですね（結果は別として）","平凡の極みです。おめでとうございます"],
+      good: ["お、少し見えてますね","錐体細胞がかろうじて生きているようです","なかなかやりますね","本気出し始めました？"],
+      great: ["鷹の目レベルです","あなたは普通の人間ではないようです","上位10%の実力です","正直、感心しています"],
+      insane: ["人間の限界を超えていますが...何者ですか？","シャコの転生を疑うレベルです","申し訳ございませんが、これは見えるはずがありません","網膜を改造されましたか？"],
+      alien: ["宇宙人確定です","この差は計測器でも困難です","チート使用を検知しました","色覚の神と認定いたします"],
+      god: ["不可能です。チートを報告しました","色覚研究所に通報済みです","あなたは人間ではありません","測定範囲外です。検査機器が壊れました"]
+    },
+    resultMsg: {
+      30: "不可能です。チート行為として通報いたしました。",
+      25: "シャコの転生でしょうか？人類の限界を超えています。",
+      20: "鷹の目レベル。錐体細胞が異常に発達しています。",
+      15: "なかなかの眼力です。テスト者の95%を上回りました。",
+      10: "一般的な人間の水準です。良くも悪くもありません。",
+      6: "かろうじて合格。目をお休めになった方がよろしいかと。",
+      3: "大変失礼ですが、色覚異常の可能性がございます。眼科をお勧めします。",
+      0: "...画面をご覧になっていましたか？"
+    }
+  },
+  'ko': {
+    flag: '🇰🇷', name: '한국어',
+    title: '색각 테스트', subtitle: 'Color IQ Test',
+    statTests: '총 테스트 수', statPassLv25: 'Lv.25 통과', statWorldRecord: '세계 기록',
+    startBtn: '테스트 시작', personalBest: '나의 최고 기록: ',
+    howTo: '<b>방법:</b> 격자에서 <b>다른 색</b>의 칸을 찾으세요.<br>레벨이 올라갈수록 색 차이가 줄고, 격자가 커집니다.<br><b>❤️ x 3</b> 목숨. 틀리면 감소. <b>⏱️</b> 시간 제한.',
+    hudLevel: '레벨', hudGrid: '그리드', hudLives: '라이프', hudTime: '시간',
+    reachedLevel: '도달 레벨', newRecord: '🎉 새 기록!',
+    analysisTitle: '📊 색각 분석',
+    shareTitle: '결과를 공유하고 친구에게 도전장을 보내세요',
+    shareTwitter: '𝕏 트윗', shareCopy: '📋 복사', shareIG: 'IG 스토리',
+    nicknamePlaceholder: '닉네임 입력', submitBtn: '제출',
+    leaderboardBtn: '🏆 리더보드', leaderboardTitle: '🏆 리더보드 Top 20',
+    playAgain: '다시 하기', homeBtn: '홈',
+    copiedToast: '복사 완료!', imgDownloaded: '이미지 다운로드 완료! IG 스토리에 저장하세요',
+    submitted: '✅ 제출 완료!', loading: '로딩 중...', noRecords: '아직 기록이 없습니다. 첫 번째가 되세요!',
+    anonymous: '익명',
+    nextLevelGrid: '다음: {g}x{g} 그리드',
+    rankYour: '내 랭킹: ', topPct: '상위 {n}%', seeDoctor: '안과 추천',
+    nextGoal: '{rank} 등급까지 {n} 레벨 남음', reachedPeak: '정상에 도달했습니다.',
+    fakeStats: '같은 등급 비율: <span>{pct}</span><br>세계 기록: <span>Level 38 (🇯🇵 ColorMaster)</span><br>총 <span>{total}</span> 명 테스트',
+    shareText: '👁️ 색각 테스트 Color IQ Test\n내 점수: Level {score} ({rank}) {pct}\n{blocks}\n{msg}\n나를 이길 수 있어? 👉 https://yuchenchen-debug.github.io/color-iq-test/',
+    shareImgTitle: '👁️ 색각 테스트 Color IQ Test', shareImgReached: '도달 레벨', shareImgCTA: '나를 이길 수 있어?',
+    weaknessAvgReaction: '평균 반응속도', weaknessAccuracy: '정확도', weaknessMistakes: '실수 횟수',
+    weaknessFinalGrid: '최종 그리드', weaknessMinDiff: '최소 색차', weaknessLastHue: '마지막 색상계',
+    mistakeUnit: '{n}회',
+    hueRed: '빨간색계', hueOrangeYellow: '주황-노란색계', hueGreen: '초록색계', hueCyanBlue: '청색계', huePurple: '보라색계', huePink: '분홍색계',
+    moreGames: '🎮 더 많은 도전',
+    gameMillisecond: '밀리초 챌린지', gameMillisecondHook: 'SSS는 0.01%만 가능',
+    gameReaction: '반응속도 테스트', gameReactionHook: '273ms보다 빨라?',
+    gameMemory: '기억력 한계', gameMemoryHook: '평균은 7개, 너는?',
+    metaTitle: '색각 테스트 - 당신의 눈은 얼마나 미세한 색차를 구별할 수 있나요?',
+    metaOgTitle: '색각 테스트 - Level ??? 도달 🎯',
+    metaOgDesc: '색각의 한계에 도전! 284만명 이상 테스트, Lv.25 통과는 2.1%.',
+    taunts: {
+      low: ["gg 브론즈 확정","1레벨 보스한테 지는 느낌","눈 버프 좀 받고 와라","이건 튜토리얼인데... 탈락?"],
+      mid: ["실버 티어 수준","딱 평균, 캐리 불가","노력은 인정, 실력은 글쎄","솔로랭 돌리면 골드쯤?"],
+      good: ["다이아 가능할지도?","눈 피지컬 괜찮은데","슬슬 스킬 보이는데","연습 좀 한 티가 나네"],
+      great: ["마스터 티어 눈깔","상위 10% 캐리력","프로 눈 아니야?","눈 컨디션 미쳤다"],
+      insane: ["챌린저 눈 확정","너 에임핵 쓰지?","인간의 한계를 넘었는데","이건 너프 당해야 함"],
+      alien: ["우주인 확정 ㅋㅋ","장비 오차 범위인데 맞춤?","핵 의심 신고 완료","컬러 갓 칭호 획득"],
+      god: ["불가능. 핵 사용 감지됨.","운영진에게 신고 접수됨","이건 인간이 아니야","측정 범위 초과. 서버 터짐"]
+    },
+    resultMsg: {
+      30: "불가능. 핵 사용 감지. 밴 처리 예정.",
+      25: "갯가재 환생? 인간의 한계를 돌파했다.",
+      20: "매의 눈 등급. 추체세포가 비정상적으로 강하다.",
+      15: "눈 실력 괜찮네. 테스터 95%를 이겼다.",
+      10: "평범한 인간 수준. 나쁘진 않고 좋지도 않고.",
+      6: "간신히 패스. 눈 좀 쉬게 해줘라.",
+      3: "색맹인가? 진심으로 안과 추천.",
+      0: "...화면 보고 있었어?"
+    }
+  },
+  'es': {
+    flag: '🇪🇸', name: 'Español',
+    title: 'Test de Color IQ', subtitle: '¿Qué tan agudos son tus ojos?',
+    statTests: 'Tests totales', statPassLv25: 'Pasan Lv.25', statWorldRecord: 'Récord mundial',
+    startBtn: 'COMENZAR', personalBest: 'Tu mejor marca: ',
+    howTo: '<b>Cómo jugar:</b> Encuentra la casilla con <b>color diferente</b>.<br>Cada nivel, la diferencia se reduce y la cuadrícula crece.<br><b>❤️ x 3</b> vidas. Error = pierdes vida. <b>⏱️</b> Tiempo límite.',
+    hudLevel: 'NIVEL', hudGrid: 'CUAD.', hudLives: 'VIDAS', hudTime: 'TIEMPO',
+    reachedLevel: 'Nivel alcanzado', newRecord: '🎉 ¡Nuevo récord!',
+    analysisTitle: '📊 Análisis de visión',
+    shareTitle: 'Comparte tu resultado y reta a tus amigos',
+    shareTwitter: '𝕏 Tuit', shareCopy: '📋 Copiar', shareIG: 'IG Story',
+    nicknamePlaceholder: 'Tu apodo', submitBtn: 'Enviar',
+    leaderboardBtn: '🏆 Clasificación', leaderboardTitle: '🏆 Clasificación Top 20',
+    playAgain: 'Jugar de nuevo', homeBtn: 'Inicio',
+    copiedToast: '¡Copiado!', imgDownloaded: '¡Imagen descargada! Guárdala en IG Story',
+    submitted: '✅ ¡Enviado!', loading: 'Cargando...', noRecords: '¡No hay registros aún. Sé el primero!',
+    anonymous: 'Anónimo',
+    nextLevelGrid: 'Siguiente: {g}x{g}',
+    rankYour: 'Tu ranking: ', topPct: 'Top {n}%', seeDoctor: 'Ve al oftalmólogo',
+    nextGoal: '{n} niveles más para {rank}', reachedPeak: 'Has llegado a la cima.',
+    fakeStats: '<span>{pct}</span> comparten tu rango<br>Récord mundial: <span>Level 38 (🇯🇵 ColorMaster)</span><br><span>{total}</span> tests totales',
+    shareText: '👁️ Test de Color IQ\nMi resultado: Level {score} ({rank}) {pct}\n{blocks}\n{msg}\n¿Puedes superarme? 👉 https://yuchenchen-debug.github.io/color-iq-test/',
+    shareImgTitle: '👁️ Test de Color IQ', shareImgReached: 'Nivel alcanzado', shareImgCTA: '¿Puedes superarme?',
+    weaknessAvgReaction: 'Reacción promedio', weaknessAccuracy: 'Precisión', weaknessMistakes: 'Errores',
+    weaknessFinalGrid: 'Cuadrícula final', weaknessMinDiff: 'Dif. mín. de tono', weaknessLastHue: 'Último rango de color',
+    mistakeUnit: '{n}',
+    hueRed: 'Rojos', hueOrangeYellow: 'Naranja-Amarillo', hueGreen: 'Verdes', hueCyanBlue: 'Cian-Azul', huePurple: 'Púrpuras', huePink: 'Rosas',
+    moreGames: '🎮 Más desafíos',
+    gameMillisecond: 'Milisegundo', gameMillisecondHook: 'Solo 0.01% logra SSS',
+    gameReaction: 'Test de reacción', gameReactionHook: '¿Más rápido que 273ms?',
+    gameMemory: 'Límite de memoria', gameMemoryHook: 'El promedio es 7. ¿Y tú?',
+    metaTitle: 'Test de Color IQ - ¿Qué tan sutil es tu visión?',
+    metaOgTitle: 'Test de Color IQ - ¡Llegué al Level ??? 🎯',
+    metaOgDesc: '¡Desafía tu visión del color! Más de 2.84M testeados, solo 2.1% pasan Level 25.',
+    taunts: {
+      low: ["¡Dios mío! ¿Pero qué le pasó a tus ojos?","¡NOOO! ¡Esto no puede estar pasando!","Mi abuela ciega lo haría mejor, ¡te lo juro!","¡Ay, mi corazón! ¡Qué tragedia de resultado!"],
+      mid: ["Bueno... no eres un desastre TOTAL","¡Qué drama! Ni bueno ni malo, puro suspenso","Regular como café de oficina","El público esperaba más de ti..."],
+      good: ["¡Olé! ¡Eso ya es otra cosa!","¡Se pone interesante! ¡Qué emoción!","Tus ojos tienen su encanto","¡La trama se complica! ¿Llegarás más lejos?"],
+      great: ["¡INCREÍBLE! ¡Ojos de águila!","¡El público se levanta de sus asientos!","¡Eres la estrella de esta telenovela!","¡Qué PODER! ¡Qué VISIÓN!"],
+      insane: ["¡IMPOSIBLE! ¡Esto es un MILAGRO!","¡El camarón mantis reencarnado!","¡Llamen a los científicos! ¡ESTO ES HISTÓRICO!","¡Mi corazón no puede con tanta emoción!"],
+      alien: ["¡EXTRATERRESTRE CONFIRMADO!","¡Los instrumentos lloran de envidia!","¡Esto cambia TODO lo que sabíamos!","¡DIOS DE LOS COLORES! ¡Me arrodillo!"],
+      god: ["¡IMPOSIBLE! ¡Esto es TRAMPA!","¡Llamando a la policía del color!","¡No eres humano! ¡CONFIESA!","¡ERROR! ¡La máquina explotó de la emoción!"]
+    },
+    resultMsg: {
+      30: "¡IMPOSIBLE! ¡Esto es trampa! ¡Reportado al laboratorio!",
+      25: "¿Eres un camarón mantis reencarnado? ¡Más allá de lo humano!",
+      20: "¡Ojos de águila! Tus células cónicas son sobrenaturales.",
+      15: "¡Nada mal! Superaste al 95% de los participantes.",
+      10: "Nivel humano estándar. Ni bien ni mal.",
+      6: "Apenas pasas. Tus ojos necesitan vacaciones.",
+      3: "¿Eres daltónico? En serio, ve al doctor.",
+      0: "...¿Estabas mirando la pantalla siquiera?"
+    }
+  },
+  'pt': {
+    flag: '🇧🇷', name: 'Português',
+    title: 'Teste de Color IQ', subtitle: 'Seus olhos são afiados?',
+    statTests: 'Testes totais', statPassLv25: 'Passam Lv.25', statWorldRecord: 'Recorde mundial',
+    startBtn: 'COMEÇAR', personalBest: 'Seu melhor: ',
+    howTo: '<b>Como jogar:</b> Encontre o quadrado com <b>cor diferente</b>.<br>A cada nível, a diferença diminui e o grid cresce.<br><b>❤️ x 3</b> vidas. Erro = perde vida. <b>⏱️</b> Tempo limitado.',
+    hudLevel: 'NÍVEL', hudGrid: 'GRID', hudLives: 'VIDAS', hudTime: 'TEMPO',
+    reachedLevel: 'Nível alcançado', newRecord: '🎉 Novo recorde!',
+    analysisTitle: '📊 Análise de visão',
+    shareTitle: 'Compartilhe seu resultado e desafie seus amigos',
+    shareTwitter: '𝕏 Tweet', shareCopy: '📋 Copiar', shareIG: 'IG Story',
+    nicknamePlaceholder: 'Seu apelido', submitBtn: 'Enviar',
+    leaderboardBtn: '🏆 Ranking', leaderboardTitle: '🏆 Ranking Top 20',
+    playAgain: 'Jogar de novo', homeBtn: 'Início',
+    copiedToast: 'Copiado!', imgDownloaded: 'Imagem baixada! Salve no IG Story',
+    submitted: '✅ Enviado!', loading: 'Carregando...', noRecords: 'Nenhum registro ainda. Seja o primeiro!',
+    anonymous: 'Anônimo',
+    nextLevelGrid: 'Próximo: {g}x{g}',
+    rankYour: 'Seu ranking: ', topPct: 'Top {n}%', seeDoctor: 'Consulte um oftalmologista',
+    nextGoal: 'Faltam {n} níveis para {rank}', reachedPeak: 'Você chegou ao topo.',
+    fakeStats: '<span>{pct}</span> têm o mesmo rank<br>Recorde mundial: <span>Level 38 (🇯🇵 ColorMaster)</span><br><span>{total}</span> testes no total',
+    shareText: '👁️ Teste de Color IQ\nMeu resultado: Level {score} ({rank}) {pct}\n{blocks}\n{msg}\nConsegue me superar? 👉 https://yuchenchen-debug.github.io/color-iq-test/',
+    shareImgTitle: '👁️ Teste de Color IQ', shareImgReached: 'Nível alcançado', shareImgCTA: 'Consegue me superar?',
+    weaknessAvgReaction: 'Reação média', weaknessAccuracy: 'Precisão', weaknessMistakes: 'Erros',
+    weaknessFinalGrid: 'Grid final', weaknessMinDiff: 'Dif. mín. de tom', weaknessLastHue: 'Último tom',
+    mistakeUnit: '{n}',
+    hueRed: 'Vermelho', hueOrangeYellow: 'Laranja-Amarelo', hueGreen: 'Verde', hueCyanBlue: 'Ciano-Azul', huePurple: 'Roxo', huePink: 'Rosa',
+    moreGames: '🎮 Mais desafios',
+    gameMillisecond: 'Milissegundo', gameMillisecondHook: 'Só 0.01% tira SSS',
+    gameReaction: 'Teste de reação', gameReactionHook: 'Mais rápido que 273ms?',
+    gameMemory: 'Limite de memória', gameMemoryHook: 'A média é 7. E você?',
+    metaTitle: 'Teste de Color IQ - Quão sutil é sua visão de cor?',
+    metaOgTitle: 'Teste de Color IQ - Cheguei no Level ??? 🎯',
+    metaOgDesc: 'Desafie sua visão de cor! Mais de 2.84M testaram, só 2.1% passam Level 25.',
+    taunts: {
+      low: ["Irmão kkkk que isso","Minha vó fazia melhor de olho fechado","Tá de sacanagem né","Cara... era o tutorial"],
+      mid: ["Mediano pra caramba kkk","Nem bom nem ruim, só ali né","Tá ok, acho","Fez o mínimo sindical"],
+      good: ["Eita, olho bom hein","Tá melhor que muito aí","Começou a ficar suado?","Seus cones tão vivos pelo menos"],
+      great: ["Caramba, olho de águia!","Top 10% fácil","Não é qualquer um não","Tô impressionado, sério"],
+      insane: ["Isso é humanamente possível??","Cê é um camarão mantis?","Teus olhos são hackeados","Mano... que absurdo"],
+      alien: ["Alienígena confirmado kkkkk","Até instrumento falha nessa","Tá usando hack né safado","DEUS DAS CORES"],
+      god: ["Impossível. Trapaceiro detectado.","Reportado pro laboratório de cor","Cê não é gente.","ERRO: fora da escala de medição"]
+    },
+    resultMsg: {
+      30: "Impossível. Tá usando hack. Reportado.",
+      25: "Cê é um camarão mantis reencarnado? Além dos limites humanos.",
+      20: "Olho de águia! Seus cones são sobrenaturais.",
+      15: "Olhos bons! Superou 95% dos testados.",
+      10: "Nível humano padrão. Nem bom, nem ruim.",
+      6: "Passou raspando. Seus olhos precisam de férias.",
+      3: "Cê é daltônico? Sério, vai no médico.",
+      0: "...Cê tava olhando pra tela?"
+    }
+  },
+  'de': {
+    flag: '🇩🇪', name: 'Deutsch',
+    title: 'Farbsehtest', subtitle: 'Color IQ Test',
+    statTests: 'Gesamttests', statPassLv25: 'Bestehen Lv.25', statWorldRecord: 'Weltrekord',
+    startBtn: 'TEST STARTEN', personalBest: 'Dein Bestwert: ',
+    howTo: '<b>Anleitung:</b> Finde das Feld mit einer <b>anderen Farbe</b>.<br>Pro Level wird der Unterschied kleiner und das Raster größer.<br><b>❤️ x 3</b> Leben. Fehler = Leben verloren. <b>⏱️</b> Zeitlimit.',
+    hudLevel: 'LEVEL', hudGrid: 'RASTER', hudLives: 'LEBEN', hudTime: 'ZEIT',
+    reachedLevel: 'Erreichtes Level', newRecord: '🎉 Neuer Rekord!',
+    analysisTitle: '📊 Farbsehanalyse',
+    shareTitle: 'Teile dein Ergebnis und fordere Freunde heraus',
+    shareTwitter: '𝕏 Tweet', shareCopy: '📋 Kopieren', shareIG: 'IG Story',
+    nicknamePlaceholder: 'Spitzname eingeben', submitBtn: 'Absenden',
+    leaderboardBtn: '🏆 Bestenliste', leaderboardTitle: '🏆 Bestenliste Top 20',
+    playAgain: 'Nochmal spielen', homeBtn: 'Start',
+    copiedToast: 'Kopiert!', imgDownloaded: 'Bild heruntergeladen! In IG Story speichern',
+    submitted: '✅ Gesendet!', loading: 'Lädt...', noRecords: 'Noch keine Einträge. Sei der Erste!',
+    anonymous: 'Anonym',
+    nextLevelGrid: 'Nächstes: {g}x{g} Raster',
+    rankYour: 'Dein Rang: ', topPct: 'Top {n}%', seeDoctor: 'Augenarzt empfohlen',
+    nextGoal: 'Noch {n} Level bis {rank}', reachedPeak: 'Du hast den Gipfel erreicht.',
+    fakeStats: '<span>{pct}</span> teilen deinen Rang<br>Weltrekord: <span>Level 38 (🇯🇵 ColorMaster)</span><br><span>{total}</span> Tests insgesamt',
+    shareText: '👁️ Farbsehtest Color IQ Test\nMein Ergebnis: Level {score} ({rank}) {pct}\n{blocks}\n{msg}\nKannst du mich schlagen? 👉 https://yuchenchen-debug.github.io/color-iq-test/',
+    shareImgTitle: '👁️ Farbsehtest Color IQ Test', shareImgReached: 'Erreichtes Level', shareImgCTA: 'Kannst du mich schlagen?',
+    weaknessAvgReaction: 'Ø Reaktionszeit', weaknessAccuracy: 'Genauigkeit', weaknessMistakes: 'Fehler',
+    weaknessFinalGrid: 'Letztes Raster', weaknessMinDiff: 'Min. Farbunterschied', weaknessLastHue: 'Letzter Farbbereich',
+    mistakeUnit: '{n}',
+    hueRed: 'Rot', hueOrangeYellow: 'Orange-Gelb', hueGreen: 'Grün', hueCyanBlue: 'Cyan-Blau', huePurple: 'Violett', huePink: 'Rosa',
+    moreGames: '🎮 Weitere Herausforderungen',
+    gameMillisecond: 'Millisekunde', gameMillisecondHook: 'Nur 0,01% erreichen SSS',
+    gameReaction: 'Reaktionstest', gameReactionHook: 'Schneller als 273ms?',
+    gameMemory: 'Gedächtnislimit', gameMemoryHook: 'Durchschnitt ist 7. Und du?',
+    metaTitle: 'Farbsehtest - Wie fein ist dein Farbunterscheidungsvermögen?',
+    metaOgTitle: 'Farbsehtest - Level ??? erreicht 🎯',
+    metaOgDesc: 'Teste dein Farbsehen! Über 2,84 Mio. getestet, nur 2,1% bestehen Level 25.',
+    taunts: {
+      low: ["Statistisch gesehen: unterdurchschnittlich","Die Messgenauigkeit deiner Augen: mangelhaft","Befund: Farbwahrnehmung im unteren Perzentil","Präzise formuliert: Das war nichts"],
+      mid: ["Exakt durchschnittlich. Wie erwartet.","Weder gut noch schlecht. Einfach... da.","Deine Leistung liegt im Normbereich. Knapp.","Standardabweichung: null. Du bist der Durchschnitt."],
+      good: ["Überdurchschnittlich. Akzeptabel.","Deine Zapfenzellen funktionieren ordnungsgemäß","Solide Leistung. Nicht mehr, nicht weniger.","Ganz passabel. Weiter so."],
+      great: ["Bemerkenswert präzise Farbunterscheidung","Deine Netzhaut arbeitet einwandfrei","Oberes Dezil. Respektabel.","Ich bin... fast beeindruckt."],
+      insane: ["Das liegt außerhalb der Normalverteilung","Fangschreckenkrebsverdacht bestätigt","Ihre Farbwahrnehmung: statistisch unwahrscheinlich","Messfehler? Nein? Beeindruckend."],
+      alien: ["Außerirdisch. Im wörtlichen Sinne.","Selbst kalibrierte Instrumente scheitern hier","Verdacht auf übermenschliche Fähigkeiten","Klassifikation: jenseits der Skala"],
+      god: ["Unmöglich. Betrugsanalyse eingeleitet.","An das Farbforschungslabor gemeldet.","Sie sind kein Mensch. Das ist dokumentiert.","Messbereich überschritten. System beendet."]
+    },
+    resultMsg: {
+      30: "Unmöglich. Betrugsanalyse eingeleitet. Meldung erstattet.",
+      25: "Fangschreckenkrebs-Reinkarnation? Jenseits menschlicher Grenzen.",
+      20: "Adleraugen-Klasse. Zapfenzellen überdurchschnittlich entwickelt.",
+      15: "Solide Augenleistung. Besser als 95% der Getesteten.",
+      10: "Durchschnittliche menschliche Leistung. Normbereich.",
+      6: "Gerade noch bestanden. Augenruhe empfohlen.",
+      3: "Farbenblindheit möglich. Augenarztbesuch empfohlen.",
+      0: "...Haben Sie auf den Bildschirm geschaut?"
+    }
+  },
+  'fr': {
+    flag: '🇫🇷', name: 'Français',
+    title: 'Test de Color IQ', subtitle: 'Vos yeux sont-ils aiguisés?',
+    statTests: 'Tests totaux', statPassLv25: 'Réussite Lv.25', statWorldRecord: 'Record mondial',
+    startBtn: 'COMMENCER', personalBest: 'Votre meilleur: ',
+    howTo: '<b>Comment jouer:</b> Trouvez la case avec une <b>couleur différente</b>.<br>À chaque niveau, la différence diminue et la grille grandit.<br><b>❤️ x 3</b> vies. Erreur = vie perdue. <b>⏱️</b> Temps limité.',
+    hudLevel: 'NIVEAU', hudGrid: 'GRILLE', hudLives: 'VIES', hudTime: 'TEMPS',
+    reachedLevel: 'Niveau atteint', newRecord: '🎉 Nouveau record!',
+    analysisTitle: '📊 Analyse chromatique',
+    shareTitle: 'Partagez votre résultat et défiez vos amis',
+    shareTwitter: '𝕏 Tweet', shareCopy: '📋 Copier', shareIG: 'IG Story',
+    nicknamePlaceholder: 'Votre pseudo', submitBtn: 'Envoyer',
+    leaderboardBtn: '🏆 Classement', leaderboardTitle: '🏆 Classement Top 20',
+    playAgain: 'Rejouer', homeBtn: 'Accueil',
+    copiedToast: 'Copié!', imgDownloaded: 'Image téléchargée! Sauvegardez en IG Story',
+    submitted: '✅ Envoyé!', loading: 'Chargement...', noRecords: 'Aucun record. Soyez le premier!',
+    anonymous: 'Anonyme',
+    nextLevelGrid: 'Suivant: {g}x{g}',
+    rankYour: 'Votre classement: ', topPct: 'Top {n}%', seeDoctor: 'Consultez un ophtalmologue',
+    nextGoal: 'Encore {n} niveaux pour {rank}', reachedPeak: 'Vous avez atteint le sommet.',
+    fakeStats: '<span>{pct}</span> partagent votre rang<br>Record mondial: <span>Level 38 (🇯🇵 ColorMaster)</span><br><span>{total}</span> tests au total',
+    shareText: '👁️ Test de Color IQ\nMon résultat: Level {score} ({rank}) {pct}\n{blocks}\n{msg}\nPouvez-vous me battre? 👉 https://yuchenchen-debug.github.io/color-iq-test/',
+    shareImgTitle: '👁️ Test de Color IQ', shareImgReached: 'Niveau atteint', shareImgCTA: 'Pouvez-vous me battre?',
+    weaknessAvgReaction: 'Réaction moy.', weaknessAccuracy: 'Précision', weaknessMistakes: 'Erreurs',
+    weaknessFinalGrid: 'Grille finale', weaknessMinDiff: 'Diff. min. de teinte', weaknessLastHue: 'Dernière teinte',
+    mistakeUnit: '{n}',
+    hueRed: 'Rouge', hueOrangeYellow: 'Orange-Jaune', hueGreen: 'Vert', hueCyanBlue: 'Cyan-Bleu', huePurple: 'Violet', huePink: 'Rose',
+    moreGames: '🎮 Plus de défis',
+    gameMillisecond: 'Milliseconde', gameMillisecondHook: 'Seul 0.01% obtient SSS',
+    gameReaction: 'Test de réaction', gameReactionHook: 'Plus rapide que 273ms?',
+    gameMemory: 'Limite mémoire', gameMemoryHook: 'La moyenne est 7. Et vous?',
+    metaTitle: 'Test de Color IQ - Quelle subtilité de couleur percevez-vous?',
+    metaOgTitle: 'Test de Color IQ - J\'ai atteint Level ??? 🎯',
+    metaOgDesc: 'Défiez votre vision des couleurs! Plus de 2,84M testés, seuls 2,1% passent Level 25.',
+    taunts: {
+      low: ["Oh là là... comment dire poliment...","Vos yeux ont un certain... charme rustique","C'est charmant, cette incapacité à voir les couleurs","Même un impressionniste ferait mieux, mon cher"],
+      mid: ["Parfaitement ordinaire. Quel exploit.","Ni bon ni mauvais. La médiocrité a du charme.","Comme disait Voltaire... non, rien.","Vous incarnez la moyenne avec une élégance rare."],
+      good: ["Tiens, vous avez donc des yeux fonctionnels","Pas mal. Pour un amateur, s'entend.","Vos cônes s'éveillent enfin. Bravo.","Un soupçon de talent. Continuez."],
+      great: ["Impressionnant. Presque raffiné.","Vos yeux ont un certain... panache","Chapeau. Vraiment, chapeau.","L'élite chromatique vous tend les bras."],
+      insane: ["Au-delà du commun des mortels","Vous n'êtes pas une crevette-mante, par hasard?","C'est... déconcertant de talent","Votre rétine est une œuvre d'art"],
+      alien: ["Extraterrestre confirmé, avec classe","Les instruments eux-mêmes sont jaloux","Vous transcendez la science","Dieu des couleurs, à votre service"],
+      god: ["Impossible. Vous trichez avec élégance.","Signalé au laboratoire chromatique.","Vous n'êtes pas humain. C'est un constat.","Hors limites. La machine s'incline."]
+    },
+    resultMsg: {
+      30: "Impossible. Signalé au laboratoire. Avec nos excuses.",
+      25: "Crevette-mante réincarnée? Au-delà des limites humaines.",
+      20: "Regard d'aigle. Vos cellules cônes sont remarquables.",
+      15: "Plutôt bon. Vous surpassez 95% des participants.",
+      10: "Performance humaine standard. Sans plus.",
+      6: "Tout juste passable. Vos yeux méritent du repos.",
+      3: "Daltonien, peut-être? Une visite chez l'ophtalmologue s'impose.",
+      0: "...Regardiez-vous réellement l'écran?"
+    }
+  },
+  'th': {
+    flag: '🇹🇭', name: 'ไทย',
+    title: 'ทดสอบสายตาสี', subtitle: 'Color IQ Test',
+    statTests: 'ทดสอบแล้ว', statPassLv25: 'ผ่าน Lv.25', statWorldRecord: 'สถิติโลก',
+    startBtn: 'เริ่มทดสอบ', personalBest: 'สถิติดีที่สุด: ',
+    howTo: '<b>วิธีเล่น:</b> หาช่องที่<b>สีต่าง</b>จากช่องอื่น<br>ยิ่งเลเวลสูง ความต่างยิ่งน้อย ตารางยิ่งใหญ่<br><b>❤️ x 3</b> ชีวิต แตะผิด = เสียชีวิต <b>⏱️</b> จำกัดเวลา',
+    hudLevel: 'เลเวล', hudGrid: 'ตาราง', hudLives: 'ชีวิต', hudTime: 'เวลา',
+    reachedLevel: 'ถึงเลเวล', newRecord: '🎉 สถิติใหม่!',
+    analysisTitle: '📊 วิเคราะห์สายตาสี',
+    shareTitle: 'แชร์ผลและท้าเพื่อนมาลอง',
+    shareTwitter: '𝕏 ทวีต', shareCopy: '📋 คัดลอก', shareIG: 'IG Story',
+    nicknamePlaceholder: 'ใส่ชื่อเล่น', submitBtn: 'ส่ง',
+    leaderboardBtn: '🏆 อันดับ', leaderboardTitle: '🏆 อันดับ Top 20',
+    playAgain: 'เล่นอีกครั้ง', homeBtn: 'หน้าแรก',
+    copiedToast: 'คัดลอกแล้ว!', imgDownloaded: 'ดาวน์โหลดแล้ว! กดค้างเซฟไป IG Story',
+    submitted: '✅ ส่งแล้ว!', loading: 'กำลังโหลด...', noRecords: 'ยังไม่มีสถิติ มาเป็นคนแรก!',
+    anonymous: 'ไม่ระบุชื่อ',
+    nextLevelGrid: 'ด่านถัดไป: {g}x{g}',
+    rankYour: 'อันดับของคุณ: ', topPct: 'สูงสุด {n}%', seeDoctor: 'แนะนำพบจักษุแพทย์',
+    nextGoal: 'อีก {n} ด่านถึง {rank}', reachedPeak: 'คุณถึงจุดสูงสุดแล้ว',
+    fakeStats: 'คนที่ได้อันดับเดียวกัน <span>{pct}</span><br>สถิติโลก: <span>Level 38 (🇯🇵 ColorMaster)</span><br>ทดสอบแล้ว <span>{total}</span> คน',
+    shareText: '👁️ ทดสอบสายตาสี Color IQ Test\nผลของฉัน: Level {score} ({rank}) {pct}\n{blocks}\n{msg}\nเอาชนะฉันได้มั้ย? 👉 https://yuchenchen-debug.github.io/color-iq-test/',
+    shareImgTitle: '👁️ ทดสอบสายตาสี', shareImgReached: 'ถึงเลเวล', shareImgCTA: 'เอาชนะฉันได้มั้ย?',
+    weaknessAvgReaction: 'เวลาตอบสนองเฉลี่ย', weaknessAccuracy: 'ความแม่นยำ', weaknessMistakes: 'จำนวนผิด',
+    weaknessFinalGrid: 'ตารางสุดท้าย', weaknessMinDiff: 'ค่าสีต่ำสุดที่แยกได้', weaknessLastHue: 'โทนสีสุดท้าย',
+    mistakeUnit: '{n} ครั้ง',
+    hueRed: 'โทนแดง', hueOrangeYellow: 'โทนส้ม-เหลือง', hueGreen: 'โทนเขียว', hueCyanBlue: 'โทนฟ้า-น้ำเงิน', huePurple: 'โทนม่วง', huePink: 'โทนชมพู',
+    moreGames: '🎮 ลองเกมอื่น',
+    gameMillisecond: 'มิลลิวินาที', gameMillisecondHook: 'แค่ 0.01% ได้ SSS',
+    gameReaction: 'ทดสอบปฏิกิริยา', gameReactionHook: 'เร็วกว่า 273ms มั้ย?',
+    gameMemory: 'ขีดจำกัดความจำ', gameMemoryHook: 'คนทั่วไปจำได้ 7 แล้วคุณล่ะ?',
+    metaTitle: 'ทดสอบสายตาสี - คุณแยกสีได้ละเอียดแค่ไหน?',
+    metaOgTitle: 'ทดสอบสายตาสี - ฉันถึง Level ??? 🎯',
+    metaOgDesc: 'ท้าทายสายตาสี! กว่า 2.84 ล้านคนทดสอบ แค่ 2.1% ผ่าน Level 25',
+    taunts: {
+      low: ["ตาบอดสีป่าว 555","ง่ายขนาดนี้ยังพลาด ฮ่าๆ","เด็กอนุบาลยังดีกว่า 5555","หลับตาก็น่าจะเห็นนะ"],
+      mid: ["ก็ธรรมดาๆ นะ","ไม่ดีไม่แย่ สบายดี","พอได้อยู่ สู้ต่อนะ 💪","คนปกติมาก 555"],
+      good: ["เอ้ย ดีเลยนะ","เซลล์รับสียังมีชีวิต!","มีฝีมือนะเนี่ย","เริ่มจริงจังแล้วใช่มั้ย 👀"],
+      great: ["สายตาเหยี่ยวเลย!","ไม่ธรรมดาเลยนะ","เหนือกว่า 90% แล้ว 🔥","เก่งจริงอะ"],
+      insane: ["เกินมนุษย์แล้ว!","เป็นกุ้งตั๊กแตนชาติที่แล้วมั้ย?","มนุษย์ไม่น่าจะเห็นได้","จอประสาทตาอัพเกรดมาเหรอ 555"],
+      alien: ["มนุษย์ต่างดาวชัดๆ 👽","แม้แต่เครื่องมือยังแยกยาก","ใช้สูตรโกงใช่มั้ย 555","เทพแห่งสี! 🙏"],
+      god: ["เป็นไปไม่ได้! โกงแน่ๆ!","แจ้งห้องแล็บสีแล้ว","ไม่ใช่มนุษย์แน่นอน","เกินขีดจำกัดการวัด!!"]
+    },
+    resultMsg: {
+      30: "เป็นไปไม่ได้! โกงแน่ๆ! แจ้งห้องแล็บแล้ว",
+      25: "เป็นกุ้งตั๊กแตนกลับชาติมาเกิดเหรอ? เกินขีดจำกัดมนุษย์!",
+      20: "สายตาเหยี่ยว! เซลล์รับสีแข็งแกร่งผิดปกติ",
+      15: "สายตาดีมาก เอาชนะ 95% ของคนทดสอบ",
+      10: "ระดับคนปกติ ไม่ดีไม่แย่",
+      6: "ผ่านแบบหวุดหวิด ให้ตาพักบ้างนะ",
+      3: "ตาบอดสีมั้ย? ไปหาหมอตาดีกว่า",
+      0: "...ดูหน้าจออยู่มั้ยเนี่ย?"
+    }
+  },
+  'id': {
+    flag: '🇮🇩', name: 'Indonesia',
+    title: 'Tes Warna IQ', subtitle: 'Color IQ Test',
+    statTests: 'Total tes', statPassLv25: 'Lolos Lv.25', statWorldRecord: 'Rekor dunia',
+    startBtn: 'MULAI TES', personalBest: 'Rekor terbaik: ',
+    howTo: '<b>Cara main:</b> Cari kotak yang <b>warnanya beda</b>.<br>Tiap level, perbedaan makin kecil, kotaknya makin banyak.<br><b>❤️ x 3</b> nyawa. Salah = nyawa berkurang. <b>⏱️</b> Ada batas waktu.',
+    hudLevel: 'LEVEL', hudGrid: 'KOTAK', hudLives: 'NYAWA', hudTime: 'WAKTU',
+    reachedLevel: 'Sampai level', newRecord: '🎉 Rekor baru!',
+    analysisTitle: '📊 Analisis penglihatan warna',
+    shareTitle: 'Share hasilmu dan tantang teman',
+    shareTwitter: '𝕏 Tweet', shareCopy: '📋 Salin', shareIG: 'IG Story',
+    nicknamePlaceholder: 'Masukkan nama', submitBtn: 'Kirim',
+    leaderboardBtn: '🏆 Peringkat', leaderboardTitle: '🏆 Peringkat Top 20',
+    playAgain: 'Main lagi', homeBtn: 'Beranda',
+    copiedToast: 'Disalin!', imgDownloaded: 'Gambar diunduh! Simpan ke IG Story',
+    submitted: '✅ Terkirim!', loading: 'Memuat...', noRecords: 'Belum ada rekor. Jadi yang pertama!',
+    anonymous: 'Anonim',
+    nextLevelGrid: 'Berikutnya: {g}x{g}',
+    rankYour: 'Peringkatmu: ', topPct: 'Top {n}%', seeDoctor: 'Disarankan periksa mata',
+    nextGoal: '{n} level lagi ke {rank}', reachedPeak: 'Kamu sudah di puncak.',
+    fakeStats: '<span>{pct}</span> orang sepeningkat denganmu<br>Rekor dunia: <span>Level 38 (🇯🇵 ColorMaster)</span><br>Total <span>{total}</span> orang tes',
+    shareText: '👁️ Tes Warna Color IQ Test\nHasilku: Level {score} ({rank}) {pct}\n{blocks}\n{msg}\nBisa ngalahin aku? 👉 https://yuchenchen-debug.github.io/color-iq-test/',
+    shareImgTitle: '👁️ Tes Warna Color IQ', shareImgReached: 'Sampai level', shareImgCTA: 'Bisa ngalahin aku?',
+    weaknessAvgReaction: 'Reaksi rata-rata', weaknessAccuracy: 'Akurasi', weaknessMistakes: 'Kesalahan',
+    weaknessFinalGrid: 'Kotak terakhir', weaknessMinDiff: 'Perbedaan warna min.', weaknessLastHue: 'Warna terakhir',
+    mistakeUnit: '{n} kali',
+    hueRed: 'Merah', hueOrangeYellow: 'Oranye-Kuning', hueGreen: 'Hijau', hueCyanBlue: 'Biru-Cyan', huePurple: 'Ungu', huePink: 'Pink',
+    moreGames: '🎮 Tantangan lain',
+    gameMillisecond: 'Milidetik', gameMillisecondHook: 'Cuma 0.01% dapet SSS',
+    gameReaction: 'Tes Reaksi', gameReactionHook: 'Lebih cepat dari 273ms?',
+    gameMemory: 'Batas Memori', gameMemoryHook: 'Rata-rata 7. Kamu?',
+    metaTitle: 'Tes Warna IQ - Seberapa tajam matamu?',
+    metaOgTitle: 'Tes Warna IQ - Aku sampai Level ??? 🎯',
+    metaOgDesc: 'Tantang penglihatanmu! Lebih dari 2,84 juta tes, cuma 2,1% lolos Level 25.',
+    taunts: {
+      low: ["Wkwk buta warna ya?","Gampang gini aja gagal wkwk","TK aja bisa kali","Matanya lagi off ya wkwkwk"],
+      mid: ["Yaa standar lah","Gak jelek gak bagus wkwk","Biasa aja sih","Manusia rata-rata mah gini"],
+      good: ["Eh lumayan nih","Sel kerucut matamu masih hidup!","Boleh juga","Mulai serius nih? wkwk"],
+      great: ["Mata elang nih!","Bukan orang biasa ternyata","Ngalahin 90% orang loh","Gokil sih"],
+      insane: ["Ngeri banget wkwk","Kamu udang mantis ya??","Manusia gak seharusnya bisa lihat ini","Retina upgrade ya wkwkwk"],
+      alien: ["Alien confirmed wkwk","Alat ukur aja kalah","Pake cheat ya ngaku aja wkwk","DEWA WARNA"],
+      god: ["Mustahil. Pasti cheat.","Dilaporin ke lab warna ya","Bukan manusia sih ini","ERROR: di luar jangkauan wkwkwk"]
+    },
+    resultMsg: {
+      30: "Mustahil. Pasti cheat. Dilaporin ya wkwk.",
+      25: "Udang mantis reinkarnasi? Melampaui batas manusia.",
+      20: "Mata elang! Sel kerucut super kuat.",
+      15: "Mata tajam! Ngalahin 95% peserta.",
+      10: "Level manusia biasa. Gak jelek gak bagus.",
+      6: "Lewat tipis. Mata butuh istirahat tuh.",
+      3: "Buta warna kali? Serius, periksa ke dokter.",
+      0: "...Lagi liat layar kan tadi?"
+    }
+  },
+  'vi': {
+    flag: '🇻🇳', name: 'Tiếng Việt',
+    title: 'Kiểm Tra Sắc Giác', subtitle: 'Color IQ Test',
+    statTests: 'Tổng bài test', statPassLv25: 'Qua Lv.25', statWorldRecord: 'Kỷ lục thế giới',
+    startBtn: 'BẮT ĐẦU', personalBest: 'Kỷ lục của bạn: ',
+    howTo: '<b>Cách chơi:</b> Tìm ô có <b>màu khác</b> trong lưới.<br>Mỗi level, sự khác biệt nhỏ hơn, lưới lớn hơn.<br><b>❤️ x 3</b> mạng. Sai = mất mạng. <b>⏱️</b> Giới hạn thời gian.',
+    hudLevel: 'CẤP', hudGrid: 'LƯỚI', hudLives: 'MẠNG', hudTime: 'THỜI GIAN',
+    reachedLevel: 'Đạt cấp độ', newRecord: '🎉 Kỷ lục mới!',
+    analysisTitle: '📊 Phân tích sắc giác',
+    shareTitle: 'Chia sẻ kết quả và thách đấu bạn bè',
+    shareTwitter: '𝕏 Tweet', shareCopy: '📋 Sao chép', shareIG: 'IG Story',
+    nicknamePlaceholder: 'Nhập biệt danh', submitBtn: 'Gửi',
+    leaderboardBtn: '🏆 Bảng xếp hạng', leaderboardTitle: '🏆 Bảng xếp hạng Top 20',
+    playAgain: 'Chơi lại', homeBtn: 'Trang chủ',
+    copiedToast: 'Đã sao chép!', imgDownloaded: 'Đã tải ảnh! Lưu vào IG Story',
+    submitted: '✅ Đã gửi!', loading: 'Đang tải...', noRecords: 'Chưa có kỷ lục. Hãy là người đầu tiên!',
+    anonymous: 'Ẩn danh',
+    nextLevelGrid: 'Tiếp theo: {g}x{g}',
+    rankYour: 'Thứ hạng: ', topPct: 'Top {n}%', seeDoctor: 'Nên đi khám mắt',
+    nextGoal: 'Còn {n} cấp nữa đến {rank}', reachedPeak: 'Bạn đã lên đỉnh rồi.',
+    fakeStats: '<span>{pct}</span> người cùng hạng<br>Kỷ lục thế giới: <span>Level 38 (🇯🇵 ColorMaster)</span><br>Tổng <span>{total}</span> người đã test',
+    shareText: '👁️ Kiểm Tra Sắc Giác Color IQ Test\nKết quả: Level {score} ({rank}) {pct}\n{blocks}\n{msg}\nBạn vượt được tôi không? 👉 https://yuchenchen-debug.github.io/color-iq-test/',
+    shareImgTitle: '👁️ Kiểm Tra Sắc Giác', shareImgReached: 'Đạt cấp độ', shareImgCTA: 'Bạn vượt được tôi không?',
+    weaknessAvgReaction: 'Phản xạ TB', weaknessAccuracy: 'Độ chính xác', weaknessMistakes: 'Số lần sai',
+    weaknessFinalGrid: 'Lưới cuối', weaknessMinDiff: 'Sắc độ tối thiểu', weaknessLastHue: 'Tông màu cuối',
+    mistakeUnit: '{n} lần',
+    hueRed: 'Đỏ', hueOrangeYellow: 'Cam-Vàng', hueGreen: 'Xanh lá', hueCyanBlue: 'Xanh dương', huePurple: 'Tím', huePink: 'Hồng',
+    moreGames: '🎮 Thử thách khác',
+    gameMillisecond: 'Mili giây', gameMillisecondHook: 'Chỉ 0.01% đạt SSS',
+    gameReaction: 'Test phản xạ', gameReactionHook: 'Nhanh hơn 273ms?',
+    gameMemory: 'Giới hạn trí nhớ', gameMemoryHook: 'Trung bình là 7. Còn bạn?',
+    metaTitle: 'Kiểm Tra Sắc Giác - Mắt bạn tinh đến mức nào?',
+    metaOgTitle: 'Kiểm Tra Sắc Giác - Đạt Level ??? 🎯',
+    metaOgDesc: 'Thử thách sắc giác! Hơn 2,84 triệu đã test, chỉ 2,1% qua Level 25.',
+    taunts: {
+      low: ["Mù màu hả bạn ơi :))","Dễ vậy cũng trượt á haha","Trẻ mẫu giáo còn hơn","Nhắm mắt cũng thấy mà :))"],
+      mid: ["Bình thường thôi á","Không tệ không tốt, tạm","Cũng được, cố lên nha","Người bình thường là vậy :))"],
+      good: ["Ê, mắt cũng tinh hen","Tế bào nón còn sống nè!","Khá đấy, có gì đó","Bắt đầu nghiêm túc rồi hả? 👀"],
+      great: ["Mắt đại bàng luôn!","Không phải người thường đâu","Vượt 90% người chơi rồi 🔥","Ghê thật"],
+      insane: ["Vượt giới hạn con người rồi!","Bạn là tôm tít chuyển kiếp hả?","Con người không nên thấy được cái này","Võng mạc độ chế à? :))"],
+      alien: ["Người ngoài hành tinh chắc luôn 👽","Máy đo còn thua","Dùng hack phải không thú thật đi :))","THẦN SẮC MÀU 🙏"],
+      god: ["Không thể nào! Hack chắc luôn!","Đã báo phòng thí nghiệm","Bạn không phải người đâu","Vượt thang đo rồi!!"]
+    },
+    resultMsg: {
+      30: "Không thể nào! Hack chắc luôn! Đã báo cáo.",
+      25: "Tôm tít chuyển kiếp? Vượt giới hạn con người!",
+      20: "Mắt đại bàng! Tế bào nón siêu phát triển.",
+      15: "Mắt tinh lắm! Vượt 95% người chơi.",
+      10: "Mức người bình thường. Không tệ không tốt.",
+      6: "Qua sát sao. Cho mắt nghỉ ngơi đi.",
+      3: "Mù màu hả? Nói thật, đi khám mắt đi.",
+      0: "...Bạn có nhìn màn hình không vậy?"
+    }
+  }
+};
+
+// Current language
+let curLang = 'zh-TW';
+
+function detectLang() {
+  const saved = localStorage.getItem('coloriq-lang');
+  if (saved && LANG[saved]) return saved;
+  const nav = (navigator.language || navigator.userLanguage || 'zh-TW').toLowerCase();
+  // Map browser language codes to our keys
+  if (nav.startsWith('zh')) return 'zh-TW';
+  if (nav.startsWith('ja')) return 'ja';
+  if (nav.startsWith('ko')) return 'ko';
+  if (nav.startsWith('es')) return 'es';
+  if (nav.startsWith('pt')) return 'pt';
+  if (nav.startsWith('de')) return 'de';
+  if (nav.startsWith('fr')) return 'fr';
+  if (nav.startsWith('th')) return 'th';
+  if (nav.startsWith('id') || nav.startsWith('ms')) return 'id';
+  if (nav.startsWith('vi')) return 'vi';
+  if (nav.startsWith('en')) return 'en';
+  return 'zh-TW';
+}
+
+function t(key) {
+  return (LANG[curLang] && LANG[curLang][key]) || (LANG['zh-TW'][key]) || key;
+}
+
+function toggleLangDropdown() {
+  document.getElementById('lang-dropdown').classList.toggle('open');
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.lang-switcher')) {
+    document.getElementById('lang-dropdown').classList.remove('open');
+  }
+});
+
+function setLang(lang) {
+  curLang = lang;
+  localStorage.setItem('coloriq-lang', lang);
+  document.getElementById('lang-dropdown').classList.remove('open');
+  applyLang();
+}
+
+function applyLang() {
+  const L = LANG[curLang];
+  if (!L) return;
+
+  // Update lang button
+  document.getElementById('lang-btn').textContent = L.flag + ' ' + L.name;
+
+  // Update html lang attribute
+  document.documentElement.lang = curLang;
+
+  // Update meta tags
+  document.title = L.metaTitle;
+  const setMeta = (sel, attr, val) => { const el = document.querySelector(sel); if (el) el.setAttribute(attr, val); };
+  setMeta('meta[property="og:title"]', 'content', L.metaOgTitle);
+  setMeta('meta[property="og:description"]', 'content', L.metaOgDesc);
+  setMeta('meta[name="twitter:title"]', 'content', L.metaOgTitle);
+  setMeta('meta[name="twitter:description"]', 'content', L.metaOgDesc);
+  setMeta('meta[property="og:locale"]', 'content', curLang.replace('-', '_'));
+
+  // Update all data-i18n text elements
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (L[key] !== undefined) el.textContent = L[key];
+  });
+
+  // Update all data-i18n-html elements (contains HTML)
+  document.querySelectorAll('[data-i18n-html]').forEach(el => {
+    const key = el.getAttribute('data-i18n-html');
+    if (L[key] !== undefined) el.innerHTML = L[key];
+  });
+
+  // Update placeholders
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const key = el.getAttribute('data-i18n-placeholder');
+    if (L[key] !== undefined) el.placeholder = L[key];
+  });
+
+  // Update copied toast default text
+  document.getElementById('copied-toast').textContent = t('copiedToast');
+
+  // Update fake stats box
+  updateFakeStatsBox();
+
+  // Update more-games section
+  updateMoreGames();
+
+  // Update personal best display if visible
+  if (personalBest > 0) {
+    document.getElementById('pb-val').textContent = 'Level ' + personalBest;
+  }
+}
+
+function updateFakeStatsBox() {
+  const box = document.getElementById('fake-stats-box');
+  if (!box) return;
+  const pct = document.getElementById('same-rank-pct') ? document.getElementById('same-rank-pct').textContent : '15%';
+  box.innerHTML = t('fakeStats').replace('{pct}', pct).replace('{total}', fakeTotal);
+}
+
+function updateMoreGames() {
+  const section = document.querySelector('.more-games');
+  if (!section) return;
+  section.querySelector('h3').textContent = t('moreGames');
+  const cards = section.querySelectorAll('.game-card');
+  if (cards[0]) { cards[0].querySelector('.name').textContent = t('gameMillisecond'); cards[0].querySelector('.hook').textContent = t('gameMillisecondHook'); }
+  if (cards[1]) { cards[1].querySelector('.name').textContent = t('gameReaction'); cards[1].querySelector('.hook').textContent = t('gameReactionHook'); }
+  if (cards[2]) { cards[2].querySelector('.name').textContent = t('gameMemory'); cards[2].querySelector('.hook').textContent = t('gameMemoryHook'); }
+}
+
 // Firebase init
 const firebaseConfig={apiKey:"AIzaSyC977FBxgGqVCrEjYc_J5JlefMWNCgffg0",authDomain:"yuchenchen-60a08.firebaseapp.com",databaseURL:"https://yuchenchen-60a08-default-rtdb.firebaseio.com",projectId:"yuchenchen-60a08"};
 let db;
@@ -282,6 +1017,10 @@ const fakeBase=2847000+Math.floor(Math.random()*999);
 const fakeTotal=fakeBase.toLocaleString();
 document.getElementById('total-tests').textContent=fakeTotal;
 
+// Detect and apply language
+curLang = detectLang();
+applyLang();
+
 // Screen management
 function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active')}
 
@@ -295,7 +1034,6 @@ function getGridSize(lv){
 
 // Color difference for level (hue offset)
 function getHueDiff(lv){
-  // Starts at 30, decreasing. At level 30+ it's ~2-3
   const diff=Math.max(2,32-lv*1.05);
   return diff;
 }
@@ -349,8 +1087,11 @@ function nextLevel(){
   // Next level hint
   if(level>1){
     const nextGrid=getGridSize(level+1);
-    const nextDiff=getHueDiff(level+1).toFixed(1);
-    document.getElementById('next-hint').textContent=nextGrid>gridSize?`下一關：${nextGrid}x${nextGrid} 格`:'';
+    if(nextGrid>gridSize){
+      document.getElementById('next-hint').textContent=t('nextLevelGrid').replace(/{g}/g,nextGrid);
+    }else{
+      document.getElementById('next-hint').textContent='';
+    }
   }else{
     document.getElementById('next-hint').textContent='';
   }
@@ -430,15 +1171,7 @@ function startTimer(){
 }
 
 function updateTaunt(){
-  const taunts={
-    low:["你是色盲嗎？","這也太簡單了吧","幼稚園等級","閉眼都能過"],
-    mid:["普通人類水準","不好不壞","繼續加油吧","一般般"],
-    good:["眼力不錯","你的錐狀細胞還活著","有點東西","開始認真了？"],
-    great:["鷹眼級別","你不是普通人","超越90%的人","厲害了"],
-    insane:["超越人類極限","你確定不是螳螂蝦？","人類不該能看到這個","你的視網膜是改造過的嗎"],
-    alien:["外星人","這個差異連儀器都很難分辨","你在開掛吧","色覺之神"],
-    god:["不可能。你作弊了吧？","已通報色覺實驗室","你不是人類","超出測量範圍"]
-  };
+  const taunts = LANG[curLang].taunts;
   let pool;
   if(level<=5)pool=taunts.low;
   else if(level<=10)pool=taunts.mid;
@@ -466,25 +1199,26 @@ function endGame(){
 }
 
 function getRank(s){
-  if(s>=30)return{rank:'SSS',cls:'sss',pct:'前 0.01%',pctNum:0.01};
-  if(s>=25)return{rank:'SS',cls:'ss',pct:'前 0.1%',pctNum:0.1};
-  if(s>=20)return{rank:'S',cls:'s-rank',pct:'前 1%',pctNum:1};
-  if(s>=15)return{rank:'A',cls:'a-rank',pct:'前 5%',pctNum:5};
-  if(s>=10)return{rank:'B',cls:'b-rank',pct:'前 20%',pctNum:20};
-  if(s>=6)return{rank:'C',cls:'c-rank',pct:'前 50%',pctNum:50};
-  if(s>=3)return{rank:'D',cls:'low-rank',pct:'前 75%',pctNum:75};
-  return{rank:'F',cls:'low-rank',pct:'建議掛眼科',pctNum:99};
+  if(s>=30)return{rank:'SSS',cls:'sss',pct:t('topPct').replace('{n}','0.01'),pctNum:0.01};
+  if(s>=25)return{rank:'SS',cls:'ss',pct:t('topPct').replace('{n}','0.1'),pctNum:0.1};
+  if(s>=20)return{rank:'S',cls:'s-rank',pct:t('topPct').replace('{n}','1'),pctNum:1};
+  if(s>=15)return{rank:'A',cls:'a-rank',pct:t('topPct').replace('{n}','5'),pctNum:5};
+  if(s>=10)return{rank:'B',cls:'b-rank',pct:t('topPct').replace('{n}','20'),pctNum:20};
+  if(s>=6)return{rank:'C',cls:'c-rank',pct:t('topPct').replace('{n}','50'),pctNum:50};
+  if(s>=3)return{rank:'D',cls:'low-rank',pct:t('topPct').replace('{n}','75'),pctNum:75};
+  return{rank:'F',cls:'low-rank',pct:t('seeDoctor'),pctNum:99};
 }
 
 function getResultMsg(s){
-  if(s>=30)return"不可能。你作弊了吧？已通報色覺實驗室。";
-  if(s>=25)return"你確定不是螳螂蝦轉世？超越人類極限。";
-  if(s>=20)return"鷹眼級別。你的錐狀細胞異常發達。";
-  if(s>=15)return"眼力相當不錯，擊敗了95%的測試者。";
-  if(s>=10)return"普通人類水準，不好不壞。";
-  if(s>=6)return"勉強及格，你的眼睛需要多休息。";
-  if(s>=3)return"你是色盲嗎？建議找眼科醫生看看。";
-  return"...你確定有在看螢幕嗎？";
+  const msgs = LANG[curLang].resultMsg;
+  if(s>=30)return msgs[30];
+  if(s>=25)return msgs[25];
+  if(s>=20)return msgs[20];
+  if(s>=15)return msgs[15];
+  if(s>=10)return msgs[10];
+  if(s>=6)return msgs[6];
+  if(s>=3)return msgs[3];
+  return msgs[0];
 }
 
 function renderResult(isNewPB){
@@ -494,7 +1228,7 @@ function renderResult(isNewPB){
   document.getElementById('result-rank').className='result-rank '+r.cls;
   document.getElementById('result-level').textContent=score;
   document.getElementById('result-msg').textContent=getResultMsg(score);
-  document.getElementById('result-percentile').innerHTML='你的成績排名：<span>'+r.pct+'</span>';
+  document.getElementById('result-percentile').innerHTML=t('rankYour')+'<span>'+r.pct+'</span>';
   document.getElementById('pb-notice').style.display=isNewPB?'block':'none';
 
   // Next goal
@@ -502,15 +1236,19 @@ function renderResult(isNewPB){
   const nextM=nextMilestones.find(m=>m>score);
   if(nextM){
     const nextR=getRank(nextM);
-    document.getElementById('next-goal').innerHTML='距離 <span>'+nextR.rank+'</span> 級還差 <span>'+(nextM-score)+'</span> 關';
+    document.getElementById('next-goal').innerHTML=t('nextGoal').replace('{rank}','<span>'+nextR.rank+'</span>').replace('{n}','<span>'+(nextM-score)+'</span>');
   }else{
-    document.getElementById('next-goal').textContent='你已經到達頂峰。';
+    document.getElementById('next-goal').textContent=t('reachedPeak');
   }
 
   // Same rank percentage
   const pcts={SSS:'0.01%',SS:'0.09%',S:'0.9%',A:'4%',B:'15%',C:'30%',D:'25%',F:'25%'};
-  document.getElementById('same-rank-pct').textContent=pcts[r.rank]||'15%';
-  document.getElementById('result-total-tests').textContent=fakeTotal;
+  const sameRankPct = pcts[r.rank]||'15%';
+  document.getElementById('result-total-tests')&&(document.getElementById('result-total-tests').textContent=fakeTotal);
+
+  // Fake stats box
+  const box = document.getElementById('fake-stats-box');
+  box.innerHTML = t('fakeStats').replace('{pct}', sameRankPct).replace('{total}', fakeTotal);
 
   // Weakness analysis
   renderWeakness();
@@ -520,25 +1258,31 @@ function renderWeakness(){
   const items=document.getElementById('weakness-items');
   items.innerHTML='';
 
-  // Analyze color ranges
-  const hueRanges=[{name:'紅色系',min:0,max:30},{name:'橙黃色系',min:30,max:75},{name:'綠色系',min:75,max:165},{name:'青藍色系',min:165,max:255},{name:'紫色系',min:255,max:330},{name:'粉紅色系',min:330,max:360}];
+  const hueRanges=[
+    {name:t('hueRed'),min:0,max:30},
+    {name:t('hueOrangeYellow'),min:30,max:75},
+    {name:t('hueGreen'),min:75,max:165},
+    {name:t('hueCyanBlue'),min:165,max:255},
+    {name:t('huePurple'),min:255,max:330},
+    {name:t('huePink'),min:330,max:360}
+  ];
 
   const avgReaction='0.'+(3+Math.floor(Math.random()*5))+'s';
   const accuracy=lives>0?Math.round(((level-1)/((level-1)+wrongTaps))*100):Math.round(((level-2)/((level-2)+wrongTaps))*100);
 
   const data=[
-    ['平均反應速度',avgReaction],
-    ['準確率',Math.max(0,accuracy)+'%'],
-    ['失誤次數',wrongTaps+'次'],
-    ['最終格子大小',gridSize+'x'+gridSize],
-    ['最小色差辨識',getHueDiff(score).toFixed(1)+'°']
+    [t('weaknessAvgReaction'),avgReaction],
+    [t('weaknessAccuracy'),Math.max(0,accuracy)+'%'],
+    [t('weaknessMistakes'),t('mistakeUnit').replace('{n}',wrongTaps)],
+    [t('weaknessFinalGrid'),gridSize+'x'+gridSize],
+    [t('weaknessMinDiff'),getHueDiff(score).toFixed(1)+'°']
   ];
 
   // Find hardest hue range
   if(colorHistory.length>2){
     const lastHue=colorHistory[colorHistory.length-1].hue;
     const range=hueRanges.find(r=>lastHue>=r.min&&lastHue<r.max)||hueRanges[0];
-    data.push(['最後挑戰色系',range.name]);
+    data.push([t('weaknessLastHue'),range.name]);
   }
 
   data.forEach(([label,val])=>{
@@ -553,11 +1297,12 @@ function renderWeakness(){
 function getShareText(){
   const r=getRank(score);
   const blocks='🟩'.repeat(Math.min(score,10))+'⬛'.repeat(Math.max(0,10-score));
-  return`👁️ 色覺測試 Color IQ Test
-我的成績：Level ${score}（${r.rank}級）${r.pct}
-${blocks}
-${getResultMsg(score)}
-你能超過我嗎？👉 https://yuchenchen-debug.github.io/color-iq-test/`;
+  return t('shareText')
+    .replace('{score}',score)
+    .replace('{rank}',r.rank)
+    .replace('{pct}',r.pct)
+    .replace('{blocks}',blocks)
+    .replace('{msg}',getResultMsg(score));
 }
 
 function shareLine(){
@@ -573,6 +1318,7 @@ function shareTwitter(){
 function copyResult(){
   navigator.clipboard.writeText(getShareText()).then(()=>{
     const toast=document.getElementById('copied-toast');
+    toast.textContent=t('copiedToast');
     toast.classList.add('show');
     setTimeout(()=>toast.classList.remove('show'),1500);
   });
@@ -585,9 +1331,9 @@ function shareIG(){
     link.href=dataURL;
     link.click();
     const toast=document.getElementById('copied-toast');
-    toast.textContent='圖片已下載！長按儲存到IG限動';
+    toast.textContent=t('imgDownloaded');
     toast.classList.add('show');
-    setTimeout(()=>{toast.classList.remove('show');toast.textContent='已複製！'},2500);
+    setTimeout(()=>{toast.classList.remove('show');toast.textContent=t('copiedToast')},2500);
   });
 }
 
@@ -623,7 +1369,7 @@ function generateShareImage(){
     ctx.fillStyle='#00ff88';
     ctx.font='bold 48px sans-serif';
     ctx.textAlign='center';
-    ctx.fillText('👁️ 色覺測試 Color IQ Test',540,160);
+    ctx.fillText(t('shareImgTitle'),540,160);
 
     // Rank
     const rankColors={SSS:'#ff00ff',SS:'#ff00ff',S:'#ffaa00',A:'#00ff88',B:'#4488ff',C:'#e0e0e0',D:'#666',F:'#666'};
@@ -634,7 +1380,7 @@ function generateShareImage(){
     // Level
     ctx.fillStyle='#e0e0e0';
     ctx.font='bold 36px sans-serif';
-    ctx.fillText('到達關卡',540,500);
+    ctx.fillText(t('shareImgReached'),540,500);
     ctx.fillStyle='#00ff88';
     ctx.font='bold 96px sans-serif';
     ctx.fillText('Level '+score,540,610);
@@ -657,7 +1403,7 @@ function generateShareImage(){
     // CTA
     ctx.fillStyle='#666';
     ctx.font='24px sans-serif';
-    ctx.fillText('你能超過我嗎？',540,900);
+    ctx.fillText(t('shareImgCTA'),540,900);
     ctx.fillStyle='#00ff88';
     ctx.font='bold 22px sans-serif';
     ctx.fillText('yuchenchen-debug.github.io/color-iq-test',540,940);
@@ -673,7 +1419,7 @@ function generateShareImage(){
 
 // Leaderboard / Firebase
 function submitScore(){
-  const nick=document.getElementById('nickname-input').value.trim()||'匿名';
+  const nick=document.getElementById('nickname-input').value.trim()||t('anonymous');
   const entry={name:nick,score:score,rank:getRank(score).rank,ts:Date.now()};
 
   // Save to localStorage
@@ -688,14 +1434,14 @@ function submitScore(){
     try{db.ref('color-scores').push(entry)}catch(e){console.warn('Firebase write failed')}
   }
 
-  document.getElementById('nickname-section').innerHTML='<div style="color:var(--primary);font-weight:700">✅ 已送出！</div>';
+  document.getElementById('nickname-section').innerHTML='<div style="color:var(--primary);font-weight:700">'+t('submitted')+'</div>';
   showLeaderboard();
 }
 
 function showLeaderboard(){
   document.getElementById('lb-modal').classList.add('active');
   const list=document.getElementById('lb-list');
-  list.innerHTML='<div style="text-align:center;color:var(--text-dim);padding:20px">載入中...</div>';
+  list.innerHTML='<div style="text-align:center;color:var(--text-dim);padding:20px">'+t('loading')+'</div>';
 
   // Try Firebase first
   if(db){
@@ -716,7 +1462,7 @@ function getLocalLB(){
 
 function renderLeaderboard(entries){
   const list=document.getElementById('lb-list');
-  if(!entries.length){list.innerHTML='<div style="text-align:center;color:var(--text-dim);padding:20px">還沒有紀錄，成為第一個！</div>';return}
+  if(!entries.length){list.innerHTML='<div style="text-align:center;color:var(--text-dim);padding:20px">'+t('noRecords')+'</div>';return}
   list.innerHTML=entries.slice(0,20).map((e,i)=>{
     const rCls=i===0?'gold':i===1?'silver':i===2?'bronze':'';
     const r=getRank(e.score);
@@ -770,6 +1516,11 @@ if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch
     </a>
   </div>
 </div>
+
+<script>
+// Apply language to more-games section after it's rendered
+updateMoreGames();
+</script>
 
 </body>
 </html>
